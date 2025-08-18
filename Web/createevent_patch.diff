@@ -1,0 +1,365 @@
+export const CreateEvent = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    age: '',
+    gender: '',
+    interests: [],
+    feedback: ''
+  });
+
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (type === 'checkbox') {
+      let newInterests = [...formData.interests];
+      if (checked) {
+        newInterests.push(value);
+      } else {
+        newInterests = newInterests.filter(i => i !== value);
+      }
+      setFormData({ ...formData, interests: newInterests });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Here you can handle form submission, e.g., send data to backend
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-10">
+        <h2 className="text-2xl font-bold mb-4">Thank you for submitting the survey!</h2>
+        <p>We appreciate your feedback.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-10">
+      <h2 className="text-3xl font-bold mb-6">Event Survey Form</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label htmlFor="name" className="block font-semibold mb-1">Name <span className="text-red-600">*</span></label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            required
+            value={formData.name}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="block font-semibold mb-1">Email <span className="text-red-600">*</span></label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="age" className="block font-semibold mb-1">Age</label>
+          <input
+            type="number"
+            id="age"
+            name="age"
+            min="0"
+            value={formData.age}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <div>
+          <span className="block font-semibold mb-1">Gender</span>
+          <label className="inline-flex items-center mr-6">
+            <input
+              type="radio"
+              name="gender"
+              value="Male"
+              checked={formData.gender === 'Male'}
+              onChange={handleChange}
+              className="form-radio"
+            />
+            <span className="ml-2">Male</span>
+          </label>
+          <label className="inline-flex items-center mr-6">
+            <input
+              type="radio"
+              name="gender"
+              value="Female"
+              checked={formData.gender === 'Female'}
+              onChange={handleChange}
+              className="form-radio"
+            />
+            <span className="ml-2">Female</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="gender"
+              value="Other"
+              checked={formData.gender === 'Other'}
+              onChange={handleChange}
+              className="form-radio"
+            />
+            <span className="ml-2">Other</span>
+          </label>
+        </div>
+
+        <div>
+          <span className="block font-semibold mb-1">Interests (select all that apply)</span>
+          <label className="inline-flex items-center mr-6">
+            <input
+              type="checkbox"
+              name="interests"
+              value="Technology"
+              checked={formData.interests.includes('Technology')}
+              onChange={handleChange}
+              className="form-checkbox"
+            />
+            <span className="ml-2">Technology</span>
+          </label>
+          <label className="inline-flex items-center mr-6">
+            <input
+              type="checkbox"
+              name="interests"
+              value="Networking"
+              checked={formData.interests.includes('Networking')}
+              onChange={handleChange}
+              className="form-checkbox"
+            />
+            <span className="ml-2">Networking</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="checkbox"
+              name="interests"
+              value="Workshops"
+              checked={formData.interests.includes('Workshops')}
+              onChange={handleChange}
+              className="form-checkbox"
+            />
+            <span className="ml-2">Workshops</span>
+          </label>
+        </div>
+
+        <div>
+          <label htmlFor="feedback" className="block font-semibold mb-1">Additional Feedback</label>
+          <textarea
+            id="feedback"
+            name="feedback"
+            rows="4"
+            value={formData.feedback}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="bg-blue-900 text-white font-semibold px-6 py-3 rounded hover:bg-blue-800 transition"
+        >
+          Submit
+        </button>
+      </form>
+    </div>
+  );
+};
+=======
+import React, { useState } from 'react';
+
+export const CreateEvent = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    age: '',
+    gender: '',
+    interests: [],
+    feedback: ''
+  });
+
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (type === 'checkbox') {
+      let newInterests = [...formData.interests];
+      if (checked) {
+        newInterests.push(value);
+      } else {
+        newInterests = newInterests.filter(i => i !== value);
+      }
+      setFormData({ ...formData, interests: newInterests });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Here you can handle form submission, e.g., send data to backend
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-10 text-black">
+        <h2 className="text-2xl font-bold mb-4 text-black">Thank you for submitting the survey!</h2>
+        <p>We appreciate your feedback.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-3xl mx-auto p-6 bg-white rounded shadow mt-10 text-black">
+      <h2 className="text-3xl font-bold mb-6 text-black">Event Survey Form</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label htmlFor="name" className="block font-semibold mb-1 text-black">Name <span className="text-red-600">*</span></label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            required
+            value={formData.name}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="block font-semibold mb-1 text-black">Email <span className="text-red-600">*</span></label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="age" className="block font-semibold mb-1 text-black">Age</label>
+          <input
+            type="number"
+            id="age"
+            name="age"
+            min="0"
+            value={formData.age}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+          />
+        </div>
+
+        <div>
+          <span className="block font-semibold mb-1 text-black">Gender</span>
+          <label className="inline-flex items-center mr-6">
+            <input
+              type="radio"
+              name="gender"
+              value="Male"
+              checked={formData.gender === 'Male'}
+              onChange={handleChange}
+              className="form-radio"
+            />
+            <span className="ml-2 text-black">Male</span>
+          </label>
+          <label className="inline-flex items-center mr-6">
+            <input
+              type="radio"
+              name="gender"
+              value="Female"
+              checked={formData.gender === 'Female'}
+              onChange={handleChange}
+              className="form-radio"
+            />
+            <span className="ml-2 text-black">Female</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="gender"
+              value="Other"
+              checked={formData.gender === 'Other'}
+              onChange={handleChange}
+              className="form-radio"
+            />
+            <span className="ml-2 text-black">Other</span>
+          </label>
+        </div>
+
+        <div>
+          <span className="block font-semibold mb-1 text-black">Interests (select all that apply)</span>
+          <label className="inline-flex items-center mr-6">
+            <input
+              type="checkbox"
+              name="interests"
+              value="Technology"
+              checked={formData.interests.includes('Technology')}
+              onChange={handleChange}
+              className="form-checkbox"
+            />
+            <span className="ml-2 text-black">Technology</span>
+          </label>
+          <label className="inline-flex items-center mr-6">
+            <input
+              type="checkbox"
+              name="interests"
+              value="Networking"
+              checked={formData.interests.includes('Networking')}
+              onChange={handleChange}
+              className="form-checkbox"
+            />
+            <span className="ml-2 text-black">Networking</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="checkbox"
+              name="interests"
+              value="Workshops"
+              checked={formData.interests.includes('Workshops')}
+              onChange={handleChange}
+              className="form-checkbox"
+            />
+            <span className="ml-2 text-black">Workshops</span>
+          </label>
+        </div>
+
+        <div>
+          <label htmlFor="feedback" className="block font-semibold mb-1 text-black">Additional Feedback</label>
+          <textarea
+            id="feedback"
+            name="feedback"
+            rows="4"
+            value={formData.feedback}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="bg-blue-900 text-white font-semibold px-6 py-3 rounded hover:bg-blue-800 transition"
+        >
+          Submit
+        </button>
+      </form>
+    </div>
+  );
+};
