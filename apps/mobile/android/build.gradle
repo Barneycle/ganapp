@@ -1,0 +1,33 @@
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath "com.android.tools.build:gradle:8.3.2"
+    classpath "com.facebook.react:react-native-gradle-plugin"
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24"
+  }
+}
+
+def reactNativeAndroidDir = new File(
+  providers.exec {
+    workingDir(rootDir)
+    commandLine("node", "--print", "require.resolve('react-native/package.json')")
+  }.standardOutput.asText.get().trim(),
+  "../android"
+)
+
+allprojects {
+    repositories {
+        google()        // ✅ Must be first
+        mavenCentral()
+        mavenLocal()
+        maven { url "$rootDir/../node_modules/react-native/android" }
+        maven { url 'https://www.jitpack.io' }
+    }
+}
+
+
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"
