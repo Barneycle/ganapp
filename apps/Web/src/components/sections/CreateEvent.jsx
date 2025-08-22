@@ -1,8 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EventService } from '../../../shared/services/eventService';
-import { FileUploadService } from '../../../shared/services/fileUploadService';
-import { supabase } from '../../../shared/supabaseClient';
 
 const FileDropzone = ({ label, name, multiple = false, accept, onFileChange, onUpload, uploadType, maxSizeMB = 5 }) => {
   const fileInputRef = useRef(null);
@@ -20,36 +17,28 @@ const FileDropzone = ({ label, name, multiple = false, accept, onFileChange, onU
       setUploadProgress(0);
       
       try {
-        // Validate files
-        const allowedTypes = FileUploadService.getAllowedTypes(uploadType);
+        // Mock file validation
         for (const file of fileArray) {
-          const validation = FileUploadService.validateFile(file, allowedTypes, maxSizeMB);
-          if (!validation.valid) {
-            alert(`File validation failed: ${validation.error}`);
+          if (file.size > maxSizeMB * 1024 * 1024) {
+            alert(`File ${file.name} is too large. Max size: ${maxSizeMB}MB`);
             setUploading(false);
             return;
           }
         }
 
-        // Upload files
+        // Mock file upload
         const uploadPromises = fileArray.map(async (file, index) => {
-          let result;
-          if (uploadType === 'banner') {
-            result = await FileUploadService.uploadEventBanner(file, `temp-${Date.now()}`);
-          } else if (uploadType === 'materials') {
-            result = await FileUploadService.uploadEventMaterials(file, `temp-${Date.now()}`, 'materials');
-          } else if (uploadType === 'logo') {
-            result = await FileUploadService.uploadSponsorLogo(file, `temp-${Date.now()}`, `sponsor-${index}`);
-          } else if (uploadType === 'photo') {
-            result = await FileUploadService.uploadSpeakerPhoto(file, `temp-${Date.now()}`, `speaker-${index}`);
-          }
-
-          if (result.success) {
-            setUploadProgress(((index + 1) / fileArray.length) * 100);
-            return result;
-          } else {
-            throw new Error(result.error);
-          }
+          // Simulate upload delay
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const mockResult = {
+            success: true,
+            url: URL.createObjectURL(file),
+            filename: file.name
+          };
+          
+          setUploadProgress(((index + 1) / fileArray.length) * 100);
+          return mockResult;
         });
 
         const results = await Promise.all(uploadPromises);
@@ -232,70 +221,26 @@ export const CreateEvent = () => {
     setError(null);
 
     try {
-      // Get current user (you'll need to implement auth)
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      // Create event data
-      const eventData = {
+      // Mock event creation
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      console.log('Event created successfully (mock)');
+      console.log('Event data:', {
         title: formData.title,
-        description: formData.rationale,
         rationale: formData.rationale,
-        start_date: formData.startDate,
-        end_date: formData.endDate,
-        start_time: formData.startTime,
-        end_time: formData.endTime,
-        venue: 'TBA', // Add venue field to form
-        banner_url: uploadedFiles.banner?.url,
-        programme_url: uploadedFiles.materials?.url,
-        materials_url: uploadedFiles.materials?.url,
-        status: 'draft',
-        created_by: user.id
-      };
-
-      // Create event in database
-      const eventId = await EventService.createEvent(eventData);
-      if (!eventId) {
-        throw new Error('Failed to create event');
-      }
-
-      // Create sponsors
-      if (formData.sponsors.length > 0) {
-        const sponsorPromises = formData.sponsors.map(async (sponsor, index) => {
-          const logoUrl = uploadedFiles.sponsorLogos[index]?.url;
-          return supabase
-            .from('event_sponsors')
-            .insert([{
-              event_id: eventId,
-              name: sponsor,
-              logo_url: logoUrl
-            }]);
-        });
-        await Promise.all(sponsorPromises);
-      }
-
-      // Create speakers
-      if (formData.guestSpeakers.length > 0) {
-        const speakerPromises = formData.guestSpeakers.map(async (speaker, index) => {
-          const photoUrl = uploadedFiles.speakerPhotos[index]?.url;
-          return supabase
-            .from('event_speakers')
-            .insert([{
-              event_id: eventId,
-              name: speaker,
-              photo_url: photoUrl
-            }]);
-        });
-        await Promise.all(speakerPromises);
-      }
-
-      console.log('Event created successfully:', eventId);
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        sponsors: formData.sponsors,
+        guestSpeakers: formData.guestSpeakers,
+        uploadedFiles
+      });
+      
       navigate('/organizer');
       
     } catch (err) {
-      setError(err.message);
+      setError('Event creation failed. Please try again.');
       console.error('Event creation failed:', err);
     } finally {
       setLoading(false);

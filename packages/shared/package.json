@@ -1,21 +1,12 @@
 {
   "name": "@ganapp/shared",
   "version": "1.0.0",
-  "description": "Shared utilities and services for GanApp",
+  "private": true,
   "main": "index.ts",
-  "types": "index.ts",
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch"
-  },
   "dependencies": {
-    "@supabase/supabase-js": "^2.55.0"
+    "@supabase/supabase-js": "^2.39.0"
   },
   "devDependencies": {
-    "typescript": "^5.8.3"
-  },
-  "private": true,
-  "publishConfig": {
-    "access": "restricted"
+    "typescript": "^5.0.0"
   }
 }

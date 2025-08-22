@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserService } from '../../../shared/services/userService';
-import { supabase } from '../../../shared/supabaseClient';
 
 export const Registration = () => {
   const navigate = useNavigate();
@@ -79,69 +77,31 @@ export const Registration = () => {
     }
 
     try {
-      // Create user account with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            username: formData.username,
-            user_type: formData.userType,
-            organization: formData.organization,
-            position: formData.position
-          }
-        }
+      // Mock registration - simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Simulate successful registration
+      setSuccess(true);
+      setFormData({
+        firstName: '',
+        lastName: '',
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        userType: 'psu-student',
+        organization: '',
+        position: '',
+        agreeToTerms: false
       });
 
-      if (authError) throw authError;
-
-      if (authData.user) {
-        // Create user profile in our users table
-        const userProfile = {
-          id: authData.user.id,
-          email: formData.email,
-          username: formData.username,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          user_type: formData.userType,
-          organization: formData.organization || null,
-          position: formData.position || null,
-          role: 'participant' // Default role for new registrations
-        };
-
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([userProfile]);
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Don't throw error here as the auth account was created
-        }
-
-        setSuccess(true);
-        setFormData({
-          firstName: '',
-          lastName: '',
-          username: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-          userType: 'psu-student',
-          organization: '',
-          position: '',
-          agreeToTerms: false
-        });
-
-        // Redirect to login after successful registration
-        setTimeout(() => {
-          navigate('/login');
-        }, 3000);
-      }
+      // Redirect to login after successful registration
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
     } catch (err) {
       console.error('Registration error:', err);
-      setError(err.message || 'Registration failed. Please try again.');
+      setError('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

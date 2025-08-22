@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import techcon from '../../assets/techcon.png';
-import { EventService } from '../../../shared/services/eventService';
+// import { EventService } from '@ganapp/shared';
 
 export const Home = () => {
   const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Set to false to skip loading
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Temporarily comment out the API call to see if that's causing the issue
+    /*
     const fetchEvents = async () => {
       try {
         setLoading(true);
@@ -23,6 +25,11 @@ export const Home = () => {
     };
 
     fetchEvents();
+    */
+    
+    // Set some mock data instead
+    setEvents([]);
+    setLoading(false);
   }, []);
 
   // Use the first event as the featured event, or fallback to default

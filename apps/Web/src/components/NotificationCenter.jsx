@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { NotificationService } from '../../../shared/services/notificationService';
-import { supabase } from '../../../shared/supabaseClient';
 
 export const NotificationCenter = () => {
   const [notifications, setNotifications] = useState([]);
@@ -12,23 +10,15 @@ export const NotificationCenter = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get current user
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        loadNotifications(user.id);
-        subscribeToNotifications(user.id);
-      }
-    };
-
-    getCurrentUser();
+    // Mock user ID since we removed the database
+    const mockUserId = 'mock-user-123';
+    loadNotifications(mockUserId);
+    subscribeToNotifications(mockUserId);
 
     // Cleanup subscription on unmount
     return () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        NotificationService.unsubscribeFromNotifications(user.id);
-      }
+      // Mock cleanup
+      console.log('Cleaning up notification subscriptions for:', mockUserId);
     };
   }, []);
 
@@ -47,13 +37,30 @@ export const NotificationCenter = () => {
   const loadNotifications = async (userId) => {
     try {
       setLoading(true);
-      const [notifs, count] = await Promise.all([
-        NotificationService.getUserNotifications(userId, 20),
-        NotificationService.getUnreadCount(userId)
-      ]);
+      // Mock notifications since we removed the database
+      const mockNotifications = [
+        {
+          id: 1,
+          title: 'Welcome to GanApp!',
+          message: 'Thank you for joining our platform. We\'re excited to have you here.',
+          type: 'success',
+          read: false,
+          created_at: new Date().toISOString(),
+          action_url: '/dashboard'
+        },
+        {
+          id: 2,
+          title: 'Event Reminder',
+          message: 'Don\'t forget about the upcoming tech conference next week.',
+          type: 'info',
+          read: true,
+          created_at: new Date(Date.now() - 86400000).toISOString(),
+          action_url: '/events'
+        }
+      ];
       
-      setNotifications(notifs);
-      setUnreadCount(count);
+      setNotifications(mockNotifications);
+      setUnreadCount(mockNotifications.filter(n => !n.read).length);
     } catch (error) {
       console.error('Error loading notifications:', error);
     } finally {
@@ -62,15 +69,13 @@ export const NotificationCenter = () => {
   };
 
   const subscribeToNotifications = (userId) => {
-    NotificationService.subscribeToNotifications(userId, (newNotification) => {
-      setNotifications(prev => [newNotification, ...prev]);
-      setUnreadCount(prev => prev + 1);
-    });
+    // Mock subscription since we removed the database
+    console.log('Subscribed to notifications for user:', userId);
   };
 
   const handleNotificationClick = async (notification) => {
     if (!notification.read) {
-      await NotificationService.markAsRead(notification.id);
+      // Mock mark as read since we removed the database
       setNotifications(prev => 
         prev.map(n => 
           n.id === notification.id ? { ...n, read: true } : n
@@ -88,12 +93,9 @@ export const NotificationCenter = () => {
 
   const markAllAsRead = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await NotificationService.markAllAsRead(user.id);
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        setUnreadCount(0);
-      }
+      // Mock mark all as read since we removed the database
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
     } catch (error) {
       console.error('Error marking all as read:', error);
     }
