@@ -76,13 +76,15 @@ const FileDropzone = ({ label, name, multiple = false, accept, onFileChange, onU
   };
 
   return (
-    <div className="mb-3 sm:mb-4 md:mb-6">
-      <label className="block text-sm sm:text-base md:text-lg font-semibold text-black mb-1 sm:mb-2">
+    <div className="mb-6 sm:mb-8">
+      <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
         {label}
       </label>
       <div
-        className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg cursor-pointer p-4 sm:p-6 md:p-8 transition-colors duration-300 min-h-[120px] sm:min-h-[150px] md:min-h-[180px] ${
-          dragActive ? 'border-blue-600 bg-blue-50' : 'border-blue-400 bg-white hover:border-blue-500'
+        className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl cursor-pointer p-6 sm:p-8 transition-all duration-300 min-h-[160px] sm:min-h-[180px] md:min-h-[200px] ${
+          dragActive 
+            ? 'border-blue-500 bg-blue-50 shadow-lg' 
+            : 'border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
         }`}
         onClick={() => fileInputRef.current && fileInputRef.current.click()}
         onDragEnter={handleDrag}
@@ -102,35 +104,36 @@ const FileDropzone = ({ label, name, multiple = false, accept, onFileChange, onU
         
         {uploading ? (
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-blue-600 font-medium">Uploading... {Math.round(uploadProgress)}%</p>
+            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-4 border-blue-200 border-t-blue-600 mx-auto mb-3"></div>
+            <p className="text-blue-600 font-medium text-base sm:text-lg">Uploading... {Math.round(uploadProgress)}%</p>
           </div>
         ) : (
           <>
-            <svg
-              className="w-10 h-10 mb-2 text-blue-600 sm:w-12 sm:h-12 md:w-14 md:h-14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-            </svg>
-            <p className="text-blue-600 font-medium text-xs sm:text-sm md:text-base text-center px-2">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mb-4 text-blue-500">
+              <svg
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+              </svg>
+            </div>
+            <p className="text-blue-600 font-medium text-sm sm:text-base text-center px-4 mb-2">
               {multiple ? 'Drag & drop files here or click to select' : 'Drag & drop file here or click to select'}
             </p>
-            <p className="text-gray-500 text-xs text-center mt-1">
+            <p className="text-slate-500 text-xs sm:text-sm text-center">
               Max size: {maxSizeMB}MB
             </p>
           </>
         )}
         
         {fileNames.length > 0 && !uploading && (
-          <ul className="mt-2 text-xs sm:text-sm text-blue-700 max-h-20 overflow-y-auto">
+          <ul className="mt-4 text-xs sm:text-sm text-blue-700 max-h-20 overflow-y-auto w-full space-y-1">
             {fileNames.map((name, idx) => (
-              <li key={idx} className="truncate max-w-[200px] sm:max-w-[250px] md:max-w-[300px]">
+              <li key={idx} className="truncate max-w-[200px] sm:max-w-[250px] md:max-w-[300px] mx-auto bg-blue-50 px-3 py-1 rounded-lg">
                 {name}
               </li>
             ))}
@@ -237,7 +240,7 @@ export const CreateEvent = () => {
         uploadedFiles
       });
       
-      navigate('/organizer');
+      navigate('/create-survey');
       
     } catch (err) {
       setError('Event creation failed. Please try again.');
@@ -248,31 +251,51 @@ export const CreateEvent = () => {
   };
 
   return (
-    <section className="min-h-screen bg-white/95 p-2 sm:p-4 md:p-6 lg:p-8 flex flex-col items-center">
-      <div className="w-full max-w-7xl mx-auto px-2 sm:px-3 md:px-4 lg:px-6">
-        <div className="mt-4 sm:mt-8 md:mt-12 space-y-3 sm:space-y-4 md:space-y-6 w-full">
-          <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-3 sm:p-4 md:p-6 lg:p-8 xl:p-10 space-y-3 sm:space-y-4 md:space-y-6 relative">
-            {/* Arrow icon in top left corner */}
-            <div className="absolute top-3 left-3 sm:top-4 sm:left-4 md:top-6 md:left-6">
-              <button
-                type="button"
-                onClick={() => navigate('/organizer')}
-                className="p-2 rounded-full hover:bg-gray-100 transition-colors touch-target"
-                aria-label="Back to organizer"
+    <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-5xl mx-auto">
+        {/* Header Section */}
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="flex items-center justify-center mb-4">
+            <button
+              onClick={() => navigate('/organizer')}
+              className="p-3 rounded-full bg-white shadow-lg hover:shadow-xl transition-all duration-200 mr-4 group"
+              aria-label="Back to organizer"
+            >
+              <svg 
+                className="w-6 h-6 text-slate-600 group-hover:text-blue-600 transition-colors" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
               >
-                <svg 
-                  className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-blue-600"
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent">
+              Create Event
+            </h1>
+          </div>
+          <p className="text-slate-600 text-lg sm:text-xl max-w-2xl mx-auto">
+            Set up your event details and upload necessary materials to get started
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+          {/* Banner Upload Section */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-800">Event Banner</h3>
+                  <p className="text-sm text-slate-600">Upload a banner image for your event</p>
+                </div>
+              </div>
             </div>
-          
-            {/* Banner Upload */}
-            <div className="mt-8">
+            <div className="p-6">
               <FileDropzone
                 label="Event Banner"
                 name="bannerFile"
@@ -283,179 +306,300 @@ export const CreateEvent = () => {
                 maxSizeMB={5}
               />
             </div>
+          </div>
 
-            {/* Event Title */}
-            <div className="space-y-2">
-              <label className="block text-lg font-semibold text-black">Event Title *</label>
-              <input
-                type="text"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black text-sm sm:text-base"
-                placeholder="Enter event title"
-                required
-              />
+          {/* Basic Information Section */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-800">Basic Information</h3>
+                  <p className="text-sm text-slate-600">Essential details about your event</p>
+                </div>
+              </div>
             </div>
+            <div className="p-6 space-y-6">
+              {/* Event Title */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                  Event Title
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400"
+                  placeholder="Enter your event title"
+                />
+              </div>
 
-            {/* Rationale */}
-            <div className="space-y-2">
-              <label className="block text-lg font-semibold text-black">Rationale *</label>
-              <textarea
-                name="rationale"
-                value={formData.rationale}
-                onChange={handleInputChange}
-                rows="4"
-                className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black text-sm sm:text-base"
-                placeholder="Describe your event"
-                required
-              />
-            </div>
-
-            {/* Date and Time Section */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Rationale */}
               <div className="space-y-2">
-                <label className="block text-lg font-semibold text-black">Start Date *</label>
-                <input
-                  type="date"
-                  name="startDate"
-                  value={formData.startDate}
+                <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                  Event Description
+                </label>
+                <textarea
+                  name="rationale"
+                  value={formData.rationale}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black text-sm sm:text-base"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-lg font-semibold text-black">End Date *</label>
-                <input
-                  type="date"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black text-sm sm:text-base"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-lg font-semibold text-black">Start Time *</label>
-                <input
-                  type="time"
-                  name="startTime"
-                  value={formData.startTime}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black text-sm sm:text-base"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-lg font-semibold text-black">End Time *</label>
-                <input
-                  type="time"
-                  name="endTime"
-                  value={formData.endTime}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black text-sm sm:text-base"
-                  required
+                  rows="4"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400"
+                  placeholder="Describe your event and its purpose"
                 />
               </div>
             </div>
+          </div>
 
-            {/* Sponsors */}
-            <div className="space-y-2">
-              <label className="block text-lg font-semibold text-black">Sponsors</label>
-              <input
-                type="text"
-                name="sponsors"
-                value={formData.sponsors.join(', ')}
-                onChange={(e) => handleArrayChange(e, 'sponsors')}
-                placeholder="Sponsor1, Sponsor2, Sponsor3"
-                className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black text-sm sm:text-base"
+          {/* Event Schedule Section */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-800">Event Schedule</h3>
+                  <p className="text-sm text-slate-600">Set the date and time for your event</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              {/* Date inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200"
+                  />
+                </div>
+              </div>
+              
+              {/* Time inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    name="startTime"
+                    value={formData.startTime}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    name="endTime"
+                    value={formData.endTime}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Sponsors Section */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-800">Sponsors & Partners</h3>
+                  <p className="text-sm text-slate-600">Add sponsor information and logos</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                  Sponsor Names
+                </label>
+                <input
+                  type="text"
+                  name="sponsors"
+                  value={formData.sponsors.join(', ')}
+                  onChange={(e) => handleArrayChange(e, 'sponsors')}
+                  placeholder="Sponsor1, Sponsor2, Sponsor3"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400"
+                />
+              </div>
+
+              <FileDropzone
+                label="Sponsor Logos"
+                name="sponsorImages"
+                multiple
+                accept="image/*"
+                onFileChange={handleFileChange}
+                onUpload={(results) => handleFileUpload('logo', results)}
+                uploadType="logo"
+                maxSizeMB={2}
               />
             </div>
+          </div>
 
-            {/* Sponsor Images Upload */}
-            <FileDropzone
-              label="Sponsor Images"
-              name="sponsorImages"
-              multiple
-              accept="image/*"
-              onFileChange={handleFileChange}
-              onUpload={(results) => handleFileUpload('logo', results)}
-              uploadType="logo"
-              maxSizeMB={2}
-            />
+          {/* Guest Speakers Section */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-800">Guest Speakers</h3>
+                  <p className="text-sm text-slate-600">Add speaker information and photos</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                  Speaker Names
+                </label>
+                <input
+                  type="text"
+                  name="guestSpeakers"
+                  value={formData.guestSpeakers.join(', ')}
+                  onChange={(e) => handleArrayChange(e, 'guestSpeakers')}
+                  placeholder="Speaker1, Speaker2, Speaker3"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400"
+                />
+              </div>
 
-            {/* Guest Speakers */}
-            <div className="space-y-2">
-              <label className="block text-lg font-semibold text-black">Guest Speakers</label>
-              <input
-                type="text"
-                name="guestSpeakers"
-                value={formData.guestSpeakers.join(', ')}
-                onChange={(e) => handleArrayChange(e, 'guestSpeakers')}
-                placeholder="Speaker1, Speaker2, Speaker3"
-                className="w-full px-3 py-2 sm:px-4 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent text-black text-sm sm:text-base"
+              <FileDropzone
+                label="Speaker Photos"
+                name="speakerImages"
+                multiple
+                accept="image/*"
+                onFileChange={handleFileChange}
+                onUpload={(results) => handleFileUpload('photo', results)}
+                uploadType="photo"
+                maxSizeMB={2}
               />
             </div>
+          </div>
 
-            {/* Guest Speaker Images Upload */}
-            <FileDropzone
-              label="Guest Speaker Images"
-              name="speakerImages"
-              multiple
-              accept="image/*"
-              onFileChange={handleFileChange}
-              onUpload={(results) => handleFileUpload('photo', results)}
-              uploadType="photo"
-              maxSizeMB={2}
-            />
-
-            {/* Event Kits Upload */}
-            <FileDropzone
-              label="Event Kits"
-              name="eventKitsFile"
-              accept="*/*"
-              onFileChange={handleFileChange}
-              onUpload={(results) => handleFileUpload('materials', results)}
-              uploadType="materials"
-              maxSizeMB={10}
-            />
-
-            {/* Event Programme Upload */}
-            <FileDropzone
-              label="Event Programme"
-              name="eventProgrammeFile"
-              accept=".pdf,.doc,.docx"
-              onFileChange={handleFileChange}
-              onUpload={(results) => handleFileUpload('materials', results)}
-              uploadType="materials"
-              maxSizeMB={10}
-            />
-
-            {/* Certificate Template Upload */}
-            <FileDropzone
-              label="Certificate Template"
-              name="certificatesFile"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              onFileChange={handleFileChange}
-              onUpload={(results) => handleFileUpload('materials', results)}
-              uploadType="materials"
-              maxSizeMB={5}
-            />
-
-            {error && <div className="text-red-500 mt-4">{error}</div>}
-            
-            <div className="flex justify-end mt-8">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-600 text-white py-2 px-4 sm:py-3 sm:px-6 rounded-lg hover:bg-blue-700 transition duration-200 disabled:opacity-50 font-semibold text-sm sm:text-base"
-              >
-                {loading ? 'Creating Event...' : 'Create Event'}
-              </button>
+          {/* Event Materials Section */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-800">Event Materials</h3>
+                  <p className="text-sm text-slate-600">Upload event kits, programmes, and certificates</p>
+                </div>
+              </div>
             </div>
-          </form>
-        </div>
+            <div className="p-6 space-y-6">
+              <FileDropzone
+                label="Event Kits"
+                name="eventKitsFile"
+                accept="*/*"
+                onFileChange={handleFileChange}
+                onUpload={(results) => handleFileUpload('materials', results)}
+                uploadType="materials"
+                maxSizeMB={10}
+              />
+
+              <FileDropzone
+                label="Event Programme"
+                name="eventProgrammeFile"
+                accept=".pdf,.doc,.docx"
+                onFileChange={handleFileChange}
+                onUpload={(results) => handleFileUpload('materials', results)}
+                uploadType="materials"
+                maxSizeMB={10}
+              />
+
+              <FileDropzone
+                label="Certificate Template"
+                name="certificatesFile"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                onFileChange={handleFileChange}
+                onUpload={(results) => handleFileUpload('materials', results)}
+                uploadType="materials"
+                maxSizeMB={5}
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="flex items-center space-x-3">
+                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-red-700 text-sm sm:text-base">{error}</span>
+              </div>
+            </div>
+          )}
+          
+          {/* Action Button */}
+          <div className="flex justify-center pt-8">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-800 text-white py-4 px-12 rounded-xl hover:from-blue-700 hover:to-blue-900 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              <span className="flex items-center justify-center space-x-2">
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                    <span>Creating Event...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                    <span>Next</span>
+                  </>
+                )}
+              </span>
+            </button>
+          </div>
+        </form>
       </div>
     </section>
   );

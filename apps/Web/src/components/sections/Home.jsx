@@ -73,10 +73,10 @@ export const Home = () => {
 
   if (loading) {
     return (
-      <section className="min-h-screen bg-white/95 p-0 flex flex-col items-center justify-center">
+      <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading events...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-6"></div>
+          <p className="text-slate-600 text-lg">Loading events...</p>
         </div>
       </section>
     );
@@ -84,13 +84,18 @@ export const Home = () => {
 
   if (error) {
     return (
-      <section className="min-h-screen bg-white/95 p-0 flex flex-col items-center justify-center">
+      <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center justify-center">
         <div className="text-center">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-            <p className="text-red-800 mb-4">{error}</p>
+          <div className="bg-white rounded-2xl shadow-lg border border-red-200 p-8 max-w-md">
+            <div className="w-16 h-16 rounded-full bg-red-100 mx-auto mb-4 flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-red-800 mb-6 text-lg">{error}</p>
             <button 
               onClick={() => window.location.reload()} 
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              className="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-900 transition-all duration-200 font-medium shadow-md hover:shadow-lg"
             >
               Try Again
             </button>
@@ -101,77 +106,168 @@ export const Home = () => {
   }
 
   return (
-    <section className="min-h-screen bg-white/95 p-0 flex flex-col items-center">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Responsive Hero Image */}
-        <div className="w-full overflow-hidden h-48 sm:h-64 md:h-80 lg:h-96">
-          <img
-            src={featuredEvent.banner_url || techcon}
-            alt={featuredEvent.title}
-            className="w-full h-full object-cover"
-          />
+    <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent mb-6">
+            Welcome to GanApp
+          </h1>
+          <p className="text-slate-600 text-lg sm:text-xl max-w-3xl mx-auto">
+            Your comprehensive platform for event management, surveys, and analytics
+          </p>
         </div>
-        
-        {/* Responsive Title */}
-        <h3 className="mt-4 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-blue-900 text-center">
-          {featuredEvent.title}
-        </h3>
-        
-        {/* Responsive Event Details Grid */}
-        <div className="mt-6 space-y-6 max-w-6xl">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="border rounded-lg shadow-md p-4 bg-white">
-              <h4 className="text-lg font-semibold text-blue-900 mb-2">Date:</h4>
-              <p className="text-gray-700">{formatDate(featuredEvent.start_date)}</p>
+
+        {/* Featured Event Banner */}
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden mb-12">
+          <div className="relative">
+            <div className="w-full overflow-hidden h-48 sm:h-64 md:h-80 lg:h-96">
+              <img
+                src={featuredEvent.banner_url || techcon}
+                alt={featuredEvent.title}
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div className="border rounded-lg shadow-md p-4 bg-white">
-              <h4 className="text-lg font-semibold text-blue-900 mb-2">Time:</h4>
-              <p className="text-gray-700">{formatTime(featuredEvent.start_time)} - {formatTime(featuredEvent.end_time)}</p>
-            </div>
-            <div className="border rounded-lg shadow-md p-4 bg-white">
-              <h4 className="text-lg font-semibold text-blue-900 mb-2">Venue:</h4>
-              <p className="text-gray-700">{featuredEvent.venue || 'TBA'}</p>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
+                {featuredEvent.title}
+              </h2>
+              <p className="text-white/90 text-sm sm:text-base max-w-2xl">
+                {featuredEvent.description}
+              </p>
             </div>
           </div>
-          
+        </div>
+
+        {/* Event Details Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-slate-800">Date</h4>
+                <p className="text-slate-600">{formatDate(featuredEvent.start_date)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-slate-800">Time</h4>
+                <p className="text-slate-600">{formatTime(featuredEvent.start_time)} - {formatTime(featuredEvent.end_time)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-slate-800">Venue</h4>
+                <p className="text-slate-600">{featuredEvent.venue || 'TBA'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Additional Event Information */}
+        <div className="space-y-6">
           {featuredEvent.rationale && (
-            <div className="border rounded-lg shadow-md p-4 bg-white">
-              <h4 className="text-lg font-semibold text-blue-900 mb-2">Rationale:</h4>
-              <p className="text-gray-700">{featuredEvent.rationale}</p>
+            <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-xl font-semibold text-slate-800">Event Rationale</h4>
+                  <p className="text-slate-600">{featuredEvent.rationale}</p>
+                </div>
+              </div>
             </div>
           )}
           
           {featuredEvent.speakers && featuredEvent.speakers.length > 0 && (
-            <div className="border rounded-lg shadow-md p-4 bg-white">
-              <h4 className="text-lg font-semibold text-blue-900 mb-2">Guest Speaker/s:</h4>
-              <ul className="list-disc list-inside text-gray-800">
-                {featuredEvent.speakers.map((speaker, index) => (
-                  <li key={index}>{speaker.name}</li>
-                ))}
-              </ul>
+            <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-xl font-semibold text-slate-800">Guest Speakers</h4>
+                  <ul className="mt-3 space-y-2">
+                    {featuredEvent.speakers.map((speaker, index) => (
+                      <li key={index} className="flex items-center space-x-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                        <span className="text-slate-600">{speaker.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
           
           {featuredEvent.sponsors && featuredEvent.sponsors.length > 0 && (
-            <div className="border rounded-lg shadow-md p-4 bg-white">
-              <h4 className="text-lg font-semibold text-blue-900 mb-2">Sponsor/s:</h4>
-              <ul className="list-disc list-inside text-gray-800">
-                {featuredEvent.sponsors.map((sponsor, index) => (
-                  <li key={index}>{sponsor.name}</li>
-                ))}
-              </ul>
+            <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 p-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-xl font-semibold text-slate-800">Sponsors</h4>
+                  <ul className="mt-3 space-y-2">
+                    {featuredEvent.sponsors.map((sponsor, index) => (
+                      <li key={index} className="flex items-center space-x-2">
+                        <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+                        <span className="text-slate-600">{sponsor.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 
           {/* Database Status */}
-          <div className="border rounded-lg shadow-md p-4 bg-blue-50">
-            <h4 className="text-lg font-semibold text-blue-900 mb-2">Database Status:</h4>
-            <p className="text-blue-800">
-              {events.length > 0 
-                ? `✅ Connected! Loaded ${events.length} event(s) from database` 
-                : '⚠️ Connected but no events found. Check if the database schema has been created.'
-              }
-            </p>
+          <div className="bg-gradient-to-r from-blue-50 to-slate-50 rounded-2xl shadow-lg border border-blue-200 p-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                </svg>
+              </div>
+              <div>
+                <h4 className="text-xl font-semibold text-blue-800">Database Status</h4>
+                <p className="text-blue-700">
+                  {events.length > 0 
+                    ? `✅ Connected! Loaded ${events.length} event(s) from database` 
+                    : '⚠️ Connected but no events found. Check if the database schema has been created.'
+                  }
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
