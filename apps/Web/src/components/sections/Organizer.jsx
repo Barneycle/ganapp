@@ -38,22 +38,33 @@ export const Organizer = () => {
 
         {/* Featured Event Banner */}
         <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden mb-12">
-          <div className="relative">
-            <div className="w-full overflow-hidden h-48 sm:h-64 md:h-80 lg:h-96">
-              <img
-                src={latestEvent.imageUrl}
-                alt={latestEvent.title}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
-                {latestEvent.title}
-              </h2>
-              <p className="text-white/90 text-sm sm:text-base max-w-2xl">
-                Join industry leaders and tech enthusiasts for a day of insightful talks, networking, and innovation showcases.
-              </p>
+          {/* Banner Image */}
+          <div className="w-full overflow-hidden h-48 sm:h-64 md:h-80 lg:h-96">
+            <img
+              src={latestEvent.imageUrl}
+              alt={latestEvent.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          
+          {/* Event Title Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-6 border-t border-slate-100">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-800 mb-3">
+              {latestEvent.title}
+            </h2>
+            <p className="text-slate-600 text-lg max-w-3xl">
+              Join industry leaders and tech enthusiasts for a day of insightful talks, networking, and innovation showcases.
+            </p>
+          </div>
+          
+          {/* Divider */}
+          <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-4 border-t border-slate-100">
+            <div className="flex items-center justify-center">
+              <div className="w-16 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
+              <div className="mx-4 px-3 py-1 bg-white rounded-full border border-slate-200">
+                <span className="text-xs font-medium text-slate-600 uppercase tracking-wide">Event Details</span>
+              </div>
+              <div className="w-16 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
             </div>
           </div>
         </div>

@@ -198,20 +198,22 @@ export const Navbar = () => {
   }, []);
 
   return (
-    <nav className="bg-navy-800 text-white shadow-lg">
+         <nav className="bg-gradient-to-r from-navy-600 via-navy-700 to-navy-600 text-white shadow-2xl border-b border-navy-500/50 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-20">
           {/* Brand Name */}
-          <Link to="/" className="text-xl font-bold text-white hover:text-gray-200">
+          <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent hover:from-navy-200 hover:via-white hover:to-navy-200 transition-all duration-300">
             GanApp
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6">
             <Link
               to="/"
-              className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 ${
-                isActive('/') ? 'text-white' : 'text-gray-300'
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 ${
+                isActive('/') 
+                  ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                  : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
               }`}
               title="Return to home page"
             >
@@ -225,14 +227,16 @@ export const Navbar = () => {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={toggleEventsDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      (isActive('/create-event') || isActive('/view-events')) ? 'text-white' : 'text-gray-300'
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 flex items-center space-x-2 ${
+                      (isActive('/create-event') || isActive('/view-events')) 
+                        ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                        : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
                     }`}
                     title="Create and manage events (upcoming, ongoing, past)"
                   >
                     <span>Events</span>
                     <svg
-                      className={`w-4 h-4 transition-transform ${isEventsDropdownOpen ? 'rotate-180' : ''}`}
+                      className={`w-4 h-4 transition-transform duration-300 ${isEventsDropdownOpen ? 'rotate-180' : ''}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -243,8 +247,8 @@ export const Navbar = () => {
                   
                   {/* Dropdown Menu */}
                   {isEventsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
+                    <div className="absolute top-full left-0 mt-3 w-52 bg-gradient-to-b from-navy-700 to-navy-800 border border-navy-600/50 rounded-xl shadow-2xl shadow-navy-900/50 z-50 backdrop-blur-sm">
+                      <div className="py-3">
                         <Link
                           to="/view-events"
                           onClick={() => setIsEventsDropdownOpen(false)}
@@ -808,12 +812,21 @@ export const Navbar = () => {
                 </Link>
               </>
             )}
+            
+            {/* Login Button - Always visible at the end */}
+            <Link
+              to="/login"
+              className="px-6 py-3 bg-gradient-to-r from-navy-600 to-navy-700 hover:from-navy-500 hover:to-navy-600 text-white text-sm font-semibold rounded-xl transition-all duration-300 border border-navy-500/50 hover:border-navy-400 hover:shadow-lg hover:shadow-navy-600/25 hover:scale-105"
+              title="Login to your account"
+            >
+              Login
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-navy-700 transition-colors"
+            className="md:hidden p-3 rounded-xl text-gray-300 hover:text-white hover:bg-navy-700/50 transition-all duration-300 hover:scale-105 border border-navy-600/30 hover:border-navy-500"
             title="Toggle mobile menu"
           >
             <svg
@@ -833,8 +846,8 @@ export const Navbar = () => {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden bg-navy-700 border-t border-navy-600">
-            <div className="px-4 py-6 space-y-4">
+                     <div className="md:hidden bg-gradient-to-b from-navy-500 to-navy-600 border-t border-navy-400/50 backdrop-blur-sm">
+            <div className="px-6 py-8 space-y-6">
               <Link
                 to="/"
                 onClick={() => setIsMenuOpen(false)}
@@ -850,16 +863,18 @@ export const Navbar = () => {
                 // Organizer-specific mobile menu
                 <>
                   {/* Events Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       Events
                     </div>
                     <Link
                       to="/view-events"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/view-events') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/view-events') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="View all events"
                     >
                       All Events
@@ -867,9 +882,11 @@ export const Navbar = () => {
                     <Link
                       to="/create-event"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/create-event') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/create-event') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Create a new event"
                     >
                       Create Event
@@ -879,9 +896,11 @@ export const Navbar = () => {
                   <Link
                     to="/survey-analytics"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block text-base font-medium ${
-                      isActive('/survey-analytics') ? 'text-white' : 'text-gray-300'
-                    } hover:text-white transition-colors`}
+                    className={`block text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                      isActive('/survey-analytics') 
+                        ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                        : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                    }`}
                     title="View survey responses and analytics"
                   >
                     Survey Analytics
@@ -891,16 +910,18 @@ export const Navbar = () => {
                 // Admin-specific mobile menu
                 <>
                   {/* Events Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       Events
                     </div>
                     <Link
                       to="/events"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/events') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/events') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="View all events"
                     >
                       All Events
@@ -908,9 +929,11 @@ export const Navbar = () => {
                     <Link
                       to="/create-event"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/create-event') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/create-event') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Create a new event"
                     >
                       Create Event
@@ -918,9 +941,11 @@ export const Navbar = () => {
                     <Link
                       to="/manage-events"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/manage-events') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/manage-events') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Manage ongoing and past events"
                     >
                       Manage Events
@@ -928,16 +953,18 @@ export const Navbar = () => {
                   </div>
                   
                   {/* Tools Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       Tools
                     </div>
                     <Link
                       to="/attendance"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/attendance') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/attendance') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="QR check-ins, photo verification, admin overrides"
                     >
                       Attendance
@@ -945,9 +972,11 @@ export const Navbar = () => {
                     <Link
                       to="/surveys"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/surveys') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/surveys') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Manage evaluation forms, view responses"
                     >
                       Surveys
@@ -955,9 +984,11 @@ export const Navbar = () => {
                     <Link
                       to="/certificates"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/certificates') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/certificates') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Issue and track participant certificates"
                     >
                       Certificates
@@ -965,16 +996,18 @@ export const Navbar = () => {
                   </div>
                   
                   {/* Reports Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       Reports
                     </div>
                     <Link
                       to="/survey-analytics"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/survey-analytics') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/survey-analytics') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="View analytics dashboard"
                     >
                       Analytics Dashboard
@@ -982,9 +1015,11 @@ export const Navbar = () => {
                     <Link
                       to="/attendance-trends"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/attendance-trends') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/attendance-trends') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="View attendance trends"
                     >
                       Attendance Trends
@@ -992,9 +1027,11 @@ export const Navbar = () => {
                     <Link
                       to="/survey-insights"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/survey-insights') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/survey-insights') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="View survey insights"
                     >
                       Survey Insights
@@ -1002,16 +1039,18 @@ export const Navbar = () => {
                   </div>
                   
                   {/* Settings Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       Settings
                     </div>
                     <Link
                       to="/system-preferences"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/system-preferences') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/system-preferences') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Configure system preferences"
                     >
                       System Preferences
@@ -1019,9 +1058,11 @@ export const Navbar = () => {
                     <Link
                       to="/user-management"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/user-management') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/user-management') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Manage user accounts and permissions"
                     >
                       User Management
@@ -1029,9 +1070,11 @@ export const Navbar = () => {
                     <Link
                       to="/customization"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/customization') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/customization') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Customize system appearance and behavior"
                     >
                       Customization
@@ -1039,16 +1082,18 @@ export const Navbar = () => {
                   </div>
                   
                   {/* Profile Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       Profile
                     </div>
                     <Link
                       to="/account-settings"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/account-settings') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/account-settings') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Manage account settings"
                     >
                       Account Settings
@@ -1056,9 +1101,11 @@ export const Navbar = () => {
                     <Link
                       to="/help"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/help') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/help') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Get help and support"
                     >
                       Help
@@ -1066,9 +1113,11 @@ export const Navbar = () => {
                     <Link
                       to="/logout"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/logout') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/logout') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Logout from the system"
                     >
                       Logout
@@ -1079,16 +1128,18 @@ export const Navbar = () => {
                 // Participants-specific mobile menu
                 <>
                   {/* Events Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       Events
                     </div>
                     <Link
                       to="/events"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/events') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/events') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="List of events you can join/register for"
                     >
                       All Events
@@ -1096,16 +1147,18 @@ export const Navbar = () => {
                   </div>
                   
                   {/* My Attendance Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       My Attendance
                     </div>
                     <Link
                       to="/my-attendance"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/my-attendance') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/my-attendance') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="View your attendance history and QR check-in status"
                     >
                       My Attendance
@@ -1113,16 +1166,18 @@ export const Navbar = () => {
                   </div>
                   
                   {/* Surveys Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       Surveys
                     </div>
                     <Link
                       to="/surveys"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/surveys') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/surveys') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Answer post-event evaluation forms"
                     >
                       Surveys
@@ -1130,16 +1185,18 @@ export const Navbar = () => {
                   </div>
                   
                   {/* Certificates Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       Certificates
                     </div>
                     <Link
                       to="/certificates"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/certificates') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/certificates') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Download and view your earned certificates"
                     >
                       Certificates
@@ -1147,16 +1204,18 @@ export const Navbar = () => {
                   </div>
                   
                   {/* Profile Section */}
-                  <div className="space-y-2">
-                    <div className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+                  <div className="space-y-3">
+                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
                       Profile
                     </div>
                     <Link
                       to="/profile"
                       onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-4 text-base font-medium ${
-                        isActive('/profile') ? 'text-white' : 'text-gray-300'
-                      } hover:text-white transition-colors`}
+                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                        isActive('/profile') 
+                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                      }`}
                       title="Account settings, help, logout"
                     >
                       Profile
@@ -1169,9 +1228,11 @@ export const Navbar = () => {
                   <Link
                     to="/admin"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block text-base font-medium ${
-                      isActive('/admin') ? 'text-white' : 'text-gray-300'
-                    } hover:text-white transition-colors`}
+                    className={`block text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                      isActive('/admin') 
+                        ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                        : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                    }`}
                     title="Access administrative functions and tools"
                   >
                     Admin
@@ -1179,9 +1240,11 @@ export const Navbar = () => {
                   <Link
                     to="/organizer"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block text-base font-medium ${
-                      isActive('/organizer') ? 'text-white' : 'text-gray-300'
-                    } hover:text-white transition-colors`}
+                    className={`block text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                      isActive('/organizer') 
+                        ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                        : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                    }`}
                     title="Manage events and surveys as an organizer"
                   >
                     Organizers
@@ -1189,15 +1252,29 @@ export const Navbar = () => {
                   <Link
                     to="/participants"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`block text-base font-medium ${
-                      isActive('/participants') ? 'text-white' : 'text-gray-300'
-                    } hover:text-white transition-colors`}
+                    className={`block text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
+                      isActive('/participants') 
+                        ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
+                        : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
+                    }`}
                     title="View and manage participant information"
                   >
                     Participants
                   </Link>
                 </>
               )}
+              
+              {/* Login Button - Always visible at the end in mobile */}
+              <div className="pt-6 border-t border-navy-600/50">
+                <Link
+                  to="/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block w-full px-6 py-4 bg-gradient-to-r from-navy-600 to-navy-700 hover:from-navy-500 hover:to-navy-600 text-white text-lg font-semibold rounded-xl transition-all duration-300 border border-navy-500/50 hover:border-navy-400 hover:shadow-lg hover:shadow-navy-600/25 text-center"
+                  title="Login to your account"
+                >
+                  Login
+                </Link>
+              </div>
             </div>
           </div>
         )}

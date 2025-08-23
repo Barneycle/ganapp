@@ -4,19 +4,19 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 const COLORS = ['#1e40af', '#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'];
 
 const StatCard = ({ title, value, change, icon }) => (
-  <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-200 p-6">
+  <div className="bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 border border-slate-100 p-6 group">
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm font-medium text-slate-600 uppercase tracking-wide">{title}</p>
-        <p className="text-3xl font-bold text-slate-800 mt-2">{value}</p>
-        <div className="flex items-center mt-2">
-          <span className={`text-sm font-medium ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+        <p className="text-sm font-medium text-slate-600 uppercase tracking-wide mb-2">{title}</p>
+        <p className="text-3xl font-bold text-slate-800 mb-3">{value}</p>
+        <div className="flex items-center">
+          <span className={`text-sm font-semibold ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {change >= 0 ? '+' : ''}{change}%
           </span>
           <span className="text-sm text-slate-500 ml-2">from last month</span>
         </div>
       </div>
-      <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center">
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
         {icon}
       </div>
     </div>
@@ -24,7 +24,7 @@ const StatCard = ({ title, value, change, icon }) => (
 );
 
 const AlertItem = ({ type, message, time, priority }) => (
-  <div className="bg-white rounded-xl border border-slate-200 p-4 mb-3">
+  <div className="bg-slate-50 rounded-2xl border border-slate-200 p-4 mb-3 hover:bg-slate-100 transition-colors duration-200">
     <div className="flex items-start justify-between">
       <div className="flex items-start space-x-3">
         <div className={`w-3 h-3 rounded-full mt-2 ${
@@ -32,11 +32,11 @@ const AlertItem = ({ type, message, time, priority }) => (
           priority === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
         }`}></div>
         <div>
-          <p className="text-sm font-medium text-slate-800">{message}</p>
-          <p className="text-xs text-slate-500 mt-1">{time}</p>
+          <p className="text-sm font-medium text-slate-800 mb-1">{message}</p>
+          <p className="text-xs text-slate-500">{time}</p>
         </div>
       </div>
-      <span className={`text-xs px-2 py-1 rounded-full ${
+      <span className={`text-xs px-3 py-1 rounded-full font-medium ${
         type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
         type === 'error' ? 'bg-red-100 text-red-800' :
         'bg-blue-100 text-blue-800'
@@ -70,11 +70,11 @@ export const Admin = () => {
   ];
 
   const surveyData = [
-    { name: 'Very Satisfied', value: 45, color: '#1e40af' },
-    { name: 'Satisfied', value: 30, color: '#1d4ed8' },
-    { name: 'Neutral', value: 15, color: '#2563eb' },
-    { name: 'Dissatisfied', value: 7, color: '#3b82f6' },
-    { name: 'Very Dissatisfied', value: 3, color: '#60a5fa' }
+    { name: 'Very Satisfied', value: 45, color: '#10b981' },
+    { name: 'Satisfied', value: 30, color: '#f59e0b' },
+    { name: 'Neutral', value: 15, color: '#6366f1' },
+    { name: 'Dissatisfied', value: 7, color: '#ef4444' },
+    { name: 'Very Dissatisfied', value: 3, color: '#8b5cf6' }
   ];
 
   const eventTrendsData = [
@@ -87,7 +87,7 @@ export const Admin = () => {
   ];
 
   const alerts = [
-    { type: 'warning', message: 'High memory usage detected on server', time: '2 minutes ago', priority: 'medium' },
+    { type: 'warning', message: 'High memory usage detected on server', time: '2 minutes ago', priority: 'high' },
     { type: 'error', message: 'Database connection timeout', time: '5 minutes ago', priority: 'high' },
     { type: 'info', message: 'New user registration spike detected', time: '10 minutes ago', priority: 'low' },
     { type: 'warning', message: 'Survey response rate below threshold', time: '15 minutes ago', priority: 'medium' }
@@ -114,19 +114,18 @@ export const Admin = () => {
 
   return (
     <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 px-4">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Admin Dashboard</h1>
-          <p className="text-xl text-blue-100 max-w-3xl">
+      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-800 mb-6">
+            Admin Dashboard
+          </h1>
+          <p className="text-slate-600 text-lg sm:text-xl max-w-3xl mx-auto">
             Monitor system performance, manage events, and track user engagement across the platform
           </p>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Quick Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {statsData.map((stat, index) => (
             <StatCard key={index} {...stat} />
           ))}
@@ -159,8 +158,8 @@ export const Admin = () => {
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}
                   />
-                  <Area type="monotone" dataKey="users" stackId="1" stroke="#1e40af" fill="#1e40af" fillOpacity={0.6} />
-                  <Area type="monotone" dataKey="events" stackId="2" stroke="#1d4ed8" fill="#1d4ed8" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="users" stackId="1" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
+                  <Area type="monotone" dataKey="events" stackId="2" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -188,8 +187,8 @@ export const Admin = () => {
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}
                   />
-                  <Line type="monotone" dataKey="events" stroke="#1e40af" strokeWidth={3} dot={{ fill: '#1e40af', strokeWidth: 2, r: 6 }} />
-                  <Line type="monotone" dataKey="participants" stroke="#1d4ed8" strokeWidth={3} dot={{ fill: '#1d4ed8', strokeWidth: 2, r: 6 }} />
+                  <Line type="monotone" dataKey="events" stroke="#8884d8" strokeWidth={3} dot={{ fill: '#8884d8', strokeWidth: 2, r: 6 }} />
+                  <Line type="monotone" dataKey="participants" stroke="#82ca9d" strokeWidth={3} dot={{ fill: '#82ca9d', strokeWidth: 2, r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -199,7 +198,7 @@ export const Admin = () => {
               <div className="flex items-center mb-6">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center mr-3">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                 </div>
                 <h2 className="text-xl font-bold text-slate-800">Survey Satisfaction Distribution</h2>
@@ -235,39 +234,39 @@ export const Admin = () => {
 
           {/* Right Column */}
           <div className="space-y-8">
-            {/* Smart Alerts Panel */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+            {/* Smart Alerts */}
+            <div className="bg-white rounded-3xl shadow-xl p-6 border border-slate-100 hover:shadow-2xl transition-all duration-500">
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center mr-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center mr-3 shadow-lg">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-bold text-slate-800">Smart Alerts</h2>
+                <h3 className="text-xl font-bold text-slate-800">Smart Alerts</h3>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {alerts.map((alert, index) => (
                   <AlertItem key={index} {...alert} />
                 ))}
               </div>
             </div>
 
-            {/* Event Calendar */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+            {/* Upcoming Events */}
+            <div className="bg-white rounded-3xl shadow-xl p-6 border border-slate-100 hover:shadow-2xl transition-all duration-500">
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center mr-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center mr-3 shadow-lg">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-bold text-slate-800">Upcoming Events</h2>
+                <h3 className="text-xl font-bold text-slate-800">Upcoming Events</h3>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {upcomingEvents.map((event, index) => (
-                  <div key={index} className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                  <div key={index} className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-semibold text-slate-800 text-sm">{event.name}</h4>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                         event.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                         event.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
@@ -282,7 +281,7 @@ export const Admin = () => {
                     {event.status === 'confirmed' && (
                       <button
                         onClick={() => handleCancelEvent(event)}
-                        className="mt-2 text-xs text-red-600 hover:text-red-800 font-medium"
+                        className="mt-3 w-full text-red-600 hover:text-red-700 text-sm font-medium transition-colors"
                       >
                         Cancel Event
                       </button>

@@ -19,7 +19,7 @@ function App() {
         <>
             {!isLoaded && <LoadingScreen onComplete={handleLoadingComplete} />}
 
-            <div className="min-h-screen bg-black text-gray-100">
+            <div className="min-h-screen bg-white text-gray-900">
                 {isLoaded && (
                     <>
                         <Navbar />
