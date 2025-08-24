@@ -1,79 +1,99 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, Alert, SafeAreaView, TextInput, Linking } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { Camera, useCameraDevices, useFrameProcessor, useCameraPermission } from 'react-native-vision-camera';
-import { scanBarcodes, BarcodeFormat } from 'vision-camera-code-scanner';
-import { runOnJS } from 'react-native-reanimated';
-import { supabase } from '@ganapp/shared';
+import React, { useState, useRef, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  SafeAreaView,
+  TextInput,
+  Linking,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import {
+  Camera,
+  getCameraDevice,
+  useCameraDevices,
+  useCameraPermission,
+  useCodeScanner,
+} from "react-native-vision-camera";
+import { supabase } from "@ganapp/shared";
 
 export default function QRScanner() {
   const { hasPermission, requestPermission } = useCameraPermission();
   const [isScanning, setIsScanning] = useState(false);
-  const [manualInput, setManualInput] = useState('');
+  const [manualInput, setManualInput] = useState("");
   const [showCamera, setShowCamera] = useState(false);
-  const [cameraType, setCameraType] = useState<'front' | 'back'>('back');
+  const [cameraType, setCameraType] = useState<"front" | "back">("back");
   const cameraRef = useRef<Camera>(null);
   const router = useRouter();
-  const devices = useCameraDevices();
-  const device = devices[cameraType as keyof typeof devices] as any;
+  const devices = Camera.getAvailableCameraDevices();
+  const device = getCameraDevice(devices, cameraType);
 
-  const handleBarCodeScanned = async (data: string) => {
-    if (isScanning) return;
-    setIsScanning(true);
+  const handleBarCodeScanned = useCallback(
+    async (data: string) => {
+      if (isScanning) return;
+      setIsScanning(true);
 
-    try {
-      let eventData;
       try {
-        eventData = JSON.parse(data);
-      } catch {
-        eventData = { eventId: data };
-      }
+        let eventData;
+        try {
+          eventData = JSON.parse(data);
+        } catch {
+          eventData = { eventId: data };
+        }
 
-      const { data: event, error } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', eventData.eventId || eventData.id)
-        .eq('status', 'published')
-        .single();
+        const { data: event, error } = await supabase
+          .from("events")
+          .select("*")
+          .eq("id", eventData.eventId || eventData.id)
+          .eq("status", "published")
+          .single();
 
-      if (error || !event) {
-        Alert.alert('Invalid QR Code', 'This QR code is not associated with a valid event.', [
-          { text: 'OK', onPress: () => setIsScanning(false) },
-        ]);
-        return;
-      }
+        if (error || !event) {
+          Alert.alert(
+            "Invalid QR Code",
+            "This QR code is not associated with a valid event.",
+            [{ text: "OK", onPress: () => setIsScanning(false) }]
+          );
+          return;
+        }
 
-      Alert.alert(
-        'Event Found!',
-        `Event: ${event.title}\nDate: ${new Date(event.start_date).toLocaleDateString()}\n\nRedirecting to survey...`,
-        [
-          {
-            text: 'Continue',
-            onPress: () => {
-              router.push({
-                pathname: '/survey',
-                params: { eventId: event.id, eventTitle: event.title },
-              });
+        Alert.alert(
+          "Event Found!",
+          `Event: ${event.title}\nDate: ${new Date(
+            event.start_date
+          ).toLocaleDateString()}\n\nRedirecting to survey...`,
+          [
+            {
+              text: "Continue",
+              onPress: () => {
+                router.push({
+                  pathname: "/survey",
+                  params: { eventId: event.id, eventTitle: event.title },
+                });
+              },
             },
-          },
-        ]
-      );
-    } catch (error) {
-      console.error('Error processing QR code:', error);
-      Alert.alert('Error', 'Failed to process QR code. Please try again.', [
-        { text: 'OK', onPress: () => setIsScanning(false) },
-      ]);
-    }
-  };
+          ]
+        );
+      } catch (error) {
+        console.error("Error processing QR code:", error);
+        Alert.alert("Error", "Failed to process QR code. Please try again.", [
+          { text: "OK", onPress: () => setIsScanning(false) },
+        ]);
+      }
+    },
+    [isScanning, router]
+  );
 
-  const frameProcessor = useFrameProcessor((frame) => {
-    'worklet';
-    const barcodes = scanBarcodes(frame, [BarcodeFormat.QR_CODE]);
-    if (barcodes.length > 0) {
-      runOnJS(handleBarCodeScanned)(barcodes[0].displayValue || '');
-    }
-  }, []);
+  const codeScanner = useCodeScanner({
+    codeTypes: ["qr"],
+    onCodeScanned: (codes) => {
+      if (codes.length > 0 && codes[0].value) {
+        handleBarCodeScanned(codes[0].value);
+      }
+    },
+  });
 
   const handleManualSubmit = () => {
     if (manualInput.trim()) {
@@ -86,7 +106,7 @@ export default function QRScanner() {
   };
 
   const toggleCameraType = () => {
-    setCameraType(current => (current === 'back' ? 'front' : 'back'));
+    setCameraType((current) => (current === "back" ? "front" : "back"));
   };
 
   const openSettings = () => {
@@ -100,8 +120,12 @@ export default function QRScanner() {
           <View className="w-16 h-16 bg-blue-500 rounded-full items-center justify-center mb-6">
             <Ionicons name="camera" size={32} color="white" />
           </View>
-          <Text className="text-white text-lg font-semibold mb-2">Requesting Camera Access</Text>
-          <Text className="text-white text-center opacity-80">Please wait while we request camera permissions...</Text>
+          <Text className="text-white text-lg font-semibold mb-2">
+            Requesting Camera Access
+          </Text>
+          <Text className="text-white text-center opacity-80">
+            Please wait while we request camera permissions...
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -118,29 +142,36 @@ export default function QRScanner() {
             Camera Access Required
           </Text>
           <Text className="text-white text-center mb-6 opacity-80 leading-6">
-            This app needs camera access to scan QR codes. Please enable camera permissions in your device settings.
+            This app needs camera access to scan QR codes. Please enable camera
+            permissions in your device settings.
           </Text>
-          
+
           <View className="space-y-3 w-full">
             <TouchableOpacity
               onPress={requestPermission}
               className="bg-blue-500 px-6 py-3 rounded-lg"
             >
-              <Text className="text-white font-semibold text-center">Request Permission</Text>
+              <Text className="text-white font-semibold text-center">
+                Request Permission
+              </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               onPress={openSettings}
               className="bg-gray-600 px-6 py-3 rounded-lg"
             >
-              <Text className="text-white font-semibold text-center">Open Settings</Text>
+              <Text className="text-white font-semibold text-center">
+                Open Settings
+              </Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               onPress={() => router.back()}
               className="bg-gray-800 px-6 py-3 rounded-lg"
             >
-              <Text className="text-white font-semibold text-center">Go Back</Text>
+              <Text className="text-white font-semibold text-center">
+                Go Back
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -159,12 +190,14 @@ export default function QRScanner() {
           >
             <Ionicons name="arrow-back" size={20} color="#1e3a8a" />
           </TouchableOpacity>
-          
+
           <View className="flex-row items-center">
             <Ionicons name="camera" size={18} color="white" />
-            <Text className="text-white text-lg font-bold ml-3">Camera Scanner</Text>
+            <Text className="text-white text-lg font-bold ml-3">
+              Camera Scanner
+            </Text>
           </View>
-          
+
           <TouchableOpacity
             onPress={toggleCameraType}
             className="w-10 h-10 bg-white bg-opacity-20 rounded-full items-center justify-center"
@@ -180,9 +213,9 @@ export default function QRScanner() {
             style={{ flex: 1 }}
             device={device}
             isActive={true}
-            frameProcessor={frameProcessor}
+            codeScanner={codeScanner}
           />
-          
+
           {/* Camera Overlay */}
           <View className="absolute inset-0 justify-center items-center pointer-events-none">
             {/* Scanner Frame */}
@@ -192,7 +225,7 @@ export default function QRScanner() {
               <View className="absolute top-0 right-0 w-8 h-8 border-r-4 border-t-4 border-blue-400 rounded-tr-lg" />
               <View className="absolute bottom-0 left-0 w-8 h-8 border-l-4 border-b-4 border-blue-400 rounded-bl-lg" />
               <View className="absolute bottom-0 right-0 w-8 h-8 border-r-4 border-b-4 border-blue-400 rounded-br-lg" />
-              
+
               {/* Scanning Line Animation */}
               <View className="absolute top-0 left-0 right-0 h-0.5 bg-blue-400 animate-pulse" />
             </View>
@@ -202,10 +235,10 @@ export default function QRScanner() {
               <Text className="text-white text-center text-lg font-semibold mb-3">
                 Position QR Code in Frame
               </Text>
-              <Text className="text-white text-center text-base opacity-80 mb-4 text-center">
+              <Text className="text-white text-base opacity-80 mb-4 text-center">
                 Hold your device steady to scan the event QR code
               </Text>
-              <Text className="text-white text-center text-sm opacity-60 text-center">
+              <Text className="text-white text-sm opacity-60 text-center">
                 The camera will automatically detect QR codes
               </Text>
             </View>
@@ -221,7 +254,7 @@ export default function QRScanner() {
             >
               <Ionicons name="camera-reverse" size={24} color="white" />
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               onPress={toggleCamera}
               className="w-16 h-16 bg-blue-500 rounded-full items-center justify-center shadow-lg"
@@ -237,7 +270,7 @@ export default function QRScanner() {
             <Text className="text-white text-center text-sm opacity-70 mb-2">
               Camera scanning active
             </Text>
-            <Text className="text-white text-center text-xs opacity-50 text-center">
+            <Text className="text-white text-xs opacity-50 text-center">
               Point camera at event QR code
             </Text>
           </View>
@@ -259,7 +292,9 @@ export default function QRScanner() {
 
         <View className="flex-row items-center">
           <Ionicons name="qr-code" size={18} color="white" />
-          <Text className="text-white text-lg font-bold ml-3">QR Code Scanner</Text>
+          <Text className="text-white text-lg font-bold ml-3">
+            QR Code Scanner
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -279,10 +314,10 @@ export default function QRScanner() {
           <Text className="text-white text-xl font-bold mb-3 text-center">
             Enter Event QR Code
           </Text>
-          <Text className="text-white text-center text-base opacity-80 mb-2 text-center">
+          <Text className="text-white text-base opacity-80 mb-2 text-center">
             Scan the QR code and enter the data manually
           </Text>
-          <Text className="text-white text-center text-sm opacity-60 text-center">
+          <Text className="text-white text-sm opacity-60 text-center">
             Or enter the event ID directly
           </Text>
         </View>
@@ -301,9 +336,13 @@ export default function QRScanner() {
           <TouchableOpacity
             onPress={handleManualSubmit}
             disabled={!manualInput.trim()}
-            className={`px-6 py-3 rounded-lg ${manualInput.trim() ? 'bg-blue-500' : 'bg-gray-400'}`}
+            className={`px-6 py-3 rounded-lg ${
+              manualInput.trim() ? "bg-blue-500" : "bg-gray-400"
+            }`}
           >
-            <Text className="text-white font-semibold text-center text-lg">Submit</Text>
+            <Text className="text-white font-semibold text-center text-lg">
+              Submit
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -313,7 +352,9 @@ export default function QRScanner() {
           className="mt-8 bg-blue-500 px-6 py-3 rounded-lg flex-row items-center"
         >
           <Ionicons name="camera" size={20} color="white" />
-          <Text className="text-white font-semibold text-center text-lg ml-2">Open Camera Scanner</Text>
+          <Text className="text-white font-semibold text-center text-lg ml-2">
+            Open Camera Scanner
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -323,7 +364,7 @@ export default function QRScanner() {
           <Text className="text-white text-center text-sm opacity-70 mb-2">
             Manual QR code entry
           </Text>
-          <Text className="text-white text-center text-xs opacity-50 text-center">
+          <Text className="text-white text-xs opacity-50 text-center">
             Enter event codes manually or use camera capture
           </Text>
         </View>
