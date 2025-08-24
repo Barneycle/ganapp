@@ -7,15 +7,23 @@ export default defineConfig({
   base: process.env.VITE_BASE_PATH || "/",
   resolve: {
     alias: {
-      "@shared": path.resolve(__dirname, "../../packages/shared"),
+      "@ganapp/shared": path.resolve(__dirname, "../../packages/shared"),
     },
-  },
-  optimizeDeps: {
-    include: ["@supabase/supabase-js"],
   },
   build: {
     rollupOptions: {
-      external: ["@supabase/supabase-js"],
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          supabase: ['@supabase/supabase-js'],
+        },
+      },
     },
+    commonjsOptions: {
+      include: [/node_modules/],
+    },
+  },
+  optimizeDeps: {
+    include: ['@supabase/supabase-js'],
   },
 });
