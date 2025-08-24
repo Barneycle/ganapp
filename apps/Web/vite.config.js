@@ -15,11 +15,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      // Force Rollup to bundle this instead of skipping it
-      dedupe: ["@supabase/supabase-js"],
-    },
-    commonjsOptions: {
-      include: [/packages\/shared/, /node_modules/],
+      external: ["@supabase/supabase-js"],
     },
   },
 });
