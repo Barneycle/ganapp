@@ -145,7 +145,13 @@ export const NotificationCenter = () => {
     <div className="relative" ref={dropdownRef}>
       {/* Notification Bell */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={() => {
+          // Add a small delay to allow moving mouse to dropdown content
+          setTimeout(() => {
+            setIsOpen(false);
+          }, 150);
+        }}
         className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
         aria-label="Notifications"
       >
@@ -163,7 +169,16 @@ export const NotificationCenter = () => {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden">
+        <div 
+          className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-96 overflow-hidden"
+          onMouseEnter={() => setIsOpen(true)}
+          onMouseLeave={() => {
+            // Add a small delay to allow moving mouse to dropdown content
+            setTimeout(() => {
+              setIsOpen(false);
+            }, 150);
+          }}
+        >
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>

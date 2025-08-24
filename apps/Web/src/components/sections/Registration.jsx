@@ -1,24 +1,27 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import TermsModal from '../TermsModal';
 
 export const Registration = () => {
   const navigate = useNavigate();
+  const { signUp, loading, error, clearError } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    username: '',
     email: '',
     password: '',
     confirmPassword: '',
-    userType: 'psu-student',
-    organization: '',
-    position: '',
+    userType: '',
     agreeToTerms: false
   });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  const [modalContentType, setModalContentType] = useState('terms');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [localError, setLocalError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -28,102 +31,141 @@ export const Registration = () => {
     }));
   };
 
+  const handleUserTypeSelect = (userType) => {
+    setFormData(prev => ({ ...prev, userType }));
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
   const validateForm = () => {
-    if (!formData.firstName || !formData.lastName || !formData.username || !formData.email || !formData.password) {
-      setError('All required fields must be filled');
-      return false;
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.userType) {
+      return 'All required fields must be filled';
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return false;
+      return 'Passwords do not match';
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return false;
+      return 'Password must be at least 6 characters long';
+    }
+
+    // Password complexity validation
+    const hasLowercase = /[a-z]/.test(formData.password);
+    const hasUppercase = /[A-Z]/.test(formData.password);
+    const hasNumber = /[0-9]/.test(formData.password);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"|\\<>\?,./`~]/.test(formData.password);
+
+    if (!hasLowercase || !hasUppercase || !hasNumber || !hasSpecialChar) {
+      return 'Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*()_+-=[]{};\':"\\|/<>,.?`~)';
     }
 
     if (!formData.agreeToTerms) {
-      setError('You must agree to the terms and conditions');
-      return false;
+      return 'You must agree to the terms and conditions';
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Please enter a valid email address');
-      return false;
+      return 'Please enter a valid email address';
     }
 
-    // Username validation (alphanumeric and underscores only)
-    const usernameRegex = /^[a-zA-Z0-9_]+$/;
-    if (!usernameRegex.test(formData.username)) {
-      setError('Username can only contain letters, numbers, and underscores');
-      return false;
+    // PSU email validation for students and employees only
+    if ((formData.userType === 'psu-student' || formData.userType === 'psu-employee') && 
+        !formData.email.endsWith('@parsu.edu.ph') && 
+        !formData.email.endsWith('.pbox@parsu.edu.ph')) {
+      return 'PSU students and employees must use @parsu.edu.ph or .pbox@parsu.edu.ph email addresses';
     }
 
-    return true;
+    return null;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    if (!validateForm()) {
-      setLoading(false);
+    
+    // Clear any previous errors
+    clearError();
+    setLocalError('');
+    
+    // Validate form
+    const validationError = validateForm();
+    if (validationError) {
+      // Set the local error so it displays
+      setLocalError(validationError);
+      console.error('Validation error:', validationError);
       return;
     }
 
     try {
-      // Mock registration - simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Simulate successful registration
-      setSuccess(true);
-      setFormData({
-        firstName: '',
-        lastName: '',
-        username: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        userType: 'psu-student',
-        organization: '',
-        position: '',
-        agreeToTerms: false
-      });
+      // Prepare user data for registration
+      const userData = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        user_type: formData.userType,
+        role: 'participant' // Default role for new users
+      };
 
-      // Redirect to login after successful registration
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
-    } catch (err) {
-      console.error('Registration error:', err);
-      setError('Registration failed. Please try again.');
-    } finally {
-      setLoading(false);
+      const result = await signUp(formData.email, formData.password, userData);
+      
+      if (result.error) {
+        setLocalError(result.error);
+        return;
+      }
+
+      if (result.user) {
+        // Registration successful - show success message and redirect to login
+        setSuccess(true);
+        // Redirect to login after 3 seconds to show success message
+        setTimeout(() => {
+          navigate('/login');
+        }, 3000);
+        return;
+      }
+
+      setLocalError('Registration failed. Please try again.');
+    } catch (error) {
+      console.error('Registration error:', error);
+      setLocalError('An unexpected error occurred. Please try again.');
     }
+  };
+
+  const openTermsModal = (type) => {
+    setModalContentType(type);
+    setIsTermsModalOpen(true);
+  };
+
+  const closeTermsModal = () => {
+    setIsTermsModalOpen(false);
   };
 
   if (success) {
     return (
       <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="w-20 h-20 bg-gradient-to-r from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-slate-800 mb-3">Registration Successful!</h2>
-          <p className="text-slate-600 mb-4">
-            Your account has been created successfully. Please check your email to verify your account.
-          </p>
-          <div className="bg-gradient-to-r from-blue-50 to-slate-50 rounded-xl p-4 border border-blue-200">
-            <p className="text-sm text-blue-700 font-medium">
-              Redirecting to login page...
+        <div className="w-full max-w-md text-center">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+            <div className="w-16 h-16 bg-green-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Registration Successful!</h2>
+            <p className="text-slate-600 mb-6">
+              Your account has been created successfully. You can now sign in using your email address.
+              {formData.userType === 'outside' && ' Outside users can use any valid email address.'}
             </p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <button
+              onClick={() => navigate('/login')}
+              className="bg-gradient-to-r from-blue-600 to-blue-800 text-white px-6 py-3 rounded-xl hover:from-blue-700 hover:to-blue-900 transition-all duration-200 font-medium shadow-md hover:shadow-lg"
+            >
+              Go to Login Now
+            </button>
           </div>
         </div>
       </section>
@@ -132,264 +174,348 @@ export const Registration = () => {
 
   return (
     <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 max-w-lg w-full">
+      <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">Create Account</h1>
-          <p className="text-slate-600">Join GanApp and start managing your events</p>
+          <h1 className="text-4xl font-bold text-slate-800 mb-4">GanApp</h1>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">Create Account</h2>
+          <p className="text-slate-600">Join GanApp and start managing your events and surveys</p>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 flex items-center space-x-2">
-            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{error}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Name Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">First Name</label>
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400"
-                placeholder="First Name"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400"
-                placeholder="Last Name"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Username */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Username</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400"
-                placeholder="username"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Email Address</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m6.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                </svg>
-              </div>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400"
-                placeholder="your@email.com"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Password Fields */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Password</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400"
-                  placeholder="••••••"
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Confirm Password</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400"
-                  placeholder="••••••"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* User Type */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">User Type</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <select
-                name="userType"
-                value={formData.userType}
-                onChange={handleInputChange}
-                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 appearance-none bg-white"
-                required
-              >
-                <option value="psu-student">PSU Student</option>
-                <option value="psu-employee">PSU Employee</option>
-                <option value="outside">Outside Participant</option>
-              </select>
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Organization & Position (conditional) */}
-          {formData.userType === 'outside' && (
-            <>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Organization</label>
-                <input
-                  type="text"
-                  name="organization"
-                  value={formData.organization}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400"
-                  placeholder="Your Organization"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2">Position</label>
-                <input
-                  type="text"
-                  name="position"
-                  value={formData.position}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-slate-400"
-                  placeholder="Your Position"
-                />
-              </div>
-            </>
-          )}
-
-          {/* Terms Agreement */}
-          <div className="flex items-start space-x-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <input
-              type="checkbox"
-              name="agreeToTerms"
-              checked={formData.agreeToTerms}
-              onChange={handleInputChange}
-              className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
-              required
-            />
-            <label className="text-sm text-slate-700">
-              I agree to the{' '}
+        {!formData.userType ? (
+          // User Type Selection Screen
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+            <h3 className="text-xl font-semibold text-slate-800 mb-6 text-center">Are you from Partido State University?</h3>
+            
+            <div className="space-y-4">
+              {/* PSU Student */}
               <button
-                type="button"
-                onClick={() => navigate('/terms')}
-                className="text-blue-600 hover:text-blue-800 underline font-medium"
+                onClick={() => handleUserTypeSelect('psu-student')}
+                className="w-full p-4 border border-slate-200 rounded-xl bg-white hover:border-slate-400 hover:shadow-md transition-all duration-200 text-left"
               >
-                Terms and Conditions
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                    <svg className="w-6 h-6 text-blue-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-base font-medium text-slate-800">PSU Student</h4>
+                    <p className="text-sm text-slate-600">I'm currently enrolled as a student at Partido State University</p>
+                  </div>
+                </div>
               </button>
-              {' '}and{' '}
-              <button
-                type="button"
-                onClick={() => navigate('/privacy')}
-                className="text-blue-600 hover:text-blue-800 underline font-medium"
-              >
-                Privacy Policy
-              </button>
-            </label>
-          </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white py-3 px-4 rounded-xl hover:from-blue-700 hover:to-blue-900 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-          >
-            <span className="flex items-center justify-center space-x-2">
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Creating Account...</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              {/* PSU Employee */}
+              <button
+                onClick={() => handleUserTypeSelect('psu-employee')}
+                className="w-full p-4 border border-slate-200 rounded-xl bg-white hover:border-slate-400 hover:shadow-md transition-all duration-200 text-left"
+              >
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                    <svg className="w-6 h-6 text-green-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2M8 6V4a2 2 0 00-2-2H4a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-base font-medium text-slate-800">PSU Employee</h4>
+                    <p className="text-sm text-slate-600">I work at Partido State University as faculty or staff</p>
+                  </div>
+                </div>
+              </button>
+
+              {/* Outside PSU */}
+              <button
+                onClick={() => handleUserTypeSelect('outside')}
+                className="w-full p-4 border border-slate-200 rounded-xl bg-white hover:border-slate-400 hover:shadow-md transition-all duration-200 text-left"
+              >
+                <div className="flex items-center">
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                    <svg className="w-6 h-6 text-purple-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-base font-medium text-slate-800">Outside PSU</h4>
+                    <p className="text-sm text-slate-600">I'm not affiliated with Partido State University</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            {/* Divider */}
+            <div className="my-6 flex items-center">
+              <div className="flex-1 border-t border-slate-200"></div>
+              <span className="px-4 text-sm text-slate-500">or</span>
+              <div className="flex-1 border-t border-slate-200"></div>
+            </div>
+
+            {/* Login Link */}
+            <div className="text-center">
+              <a
+                href="/login"
+                className="inline-block w-full py-3 px-4 bg-blue-800 text-white rounded-xl font-semibold hover:bg-blue-900 transition-colors"
+              >
+                Already have an account? Log in
+              </a>
+            </div>
+          </div>
+        ) : (
+          // Registration Form Screen
+          <>
+            {/* User Type Display */}
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
+                    formData.userType === 'psu-student' ? 'bg-blue-100' : 
+                    formData.userType === 'psu-employee' ? 'bg-green-100' : 'bg-purple-100'
+                  }`}>
+                    <svg className="w-5 h-5 text-slate-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      {formData.userType === 'psu-student' ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                      ) : formData.userType === 'psu-employee' ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2M8 6V4a2 2 0 00-2-2H4a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2 2v2m8 0V6a2 2 0 00-2-2" />
+                      ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      )}
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Selected User Type</p>
+                    <p className="text-base font-semibold text-slate-800">
+                      {formData.userType === 'psu-student' ? 'PSU Student' : 
+                       formData.userType === 'psu-employee' ? 'PSU Employee' : 'Outside PSU'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setFormData(prev => ({ ...prev, userType: '' }))}
+                  className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  <span>Create Account</span>
-                </>
+                </button>
+              </div>
+            </div>
+
+            {/* Registration Form */}
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+              {/* Error Messages */}
+              {(error || localError) && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
+                  {localError || error}
+                </div>
               )}
-            </span>
-          </button>
-        </form>
 
-        {/* Login Link */}
-        <div className="text-center mt-8">
-          <p className="text-slate-600">
-            Already have an account?{' '}
-            <button
-              onClick={() => navigate('/login')}
-              className="text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-200"
-            >
-              Sign In
-            </button>
-          </p>
-        </div>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Personal Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-slate-700 mb-2">
+                      First Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="firstName"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      required
+                      disabled={loading}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="Enter your first name"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-slate-700 mb-2">
+                      Last Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="lastName"
+                      name="lastName"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      required
+                      disabled={loading}
+                      className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="Enter your last name"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
+                    disabled={loading}
+                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder={
+                      formData.userType === 'psu-student' || formData.userType === 'psu-employee'
+                        ? 'Enter your PSU email (@parsu.edu.ph)'
+                        : 'Enter your email address'
+                    }
+                  />
+                  {(formData.userType === 'psu-student' || formData.userType === 'psu-employee') && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      Must end in @parsu.edu.ph or .pbox@parsu.edu.ph
+                    </p>
+                  )}
+                  {formData.userType === 'outside' && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      Any valid email address is accepted
+                    </p>
+                  )}
+                </div>
+
+                {/* Password Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+                      Password *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        required
+                        disabled={loading}
+                        className="w-full px-4 py-3 pr-12 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="Create a strong password"
+                      />
+                      <button
+                        type="button"
+                        onClick={togglePasswordVisibility}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        disabled={loading}
+                      >
+                        {showPassword ? (
+                          <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                          </svg>
+                        ) : (
+                          <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
+                      Confirm Password *
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleInputChange}
+                        required
+                        disabled={loading}
+                        className="w-full px-4 py-3 pr-12 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        placeholder="Confirm your password"
+                      />
+                      <button
+                        type="button"
+                        onClick={toggleConfirmPasswordVisibility}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                        disabled={loading}
+                      >
+                        {showConfirmPassword ? (
+                          <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                          </svg>
+                        ) : (
+                          <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Terms Agreement */}
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="agreeToTerms"
+                    name="agreeToTerms"
+                    checked={formData.agreeToTerms}
+                    onChange={handleInputChange}
+                    required
+                    disabled={loading}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 mt-1 disabled:opacity-50"
+                  />
+                  <label htmlFor="agreeToTerms" className="text-sm text-slate-600">
+                    I agree to the{' '}
+                    <button
+                      type="button"
+                      onClick={() => openTermsModal('terms')}
+                      className="text-blue-600 hover:text-blue-800 font-medium transition-colors underline"
+                    >
+                      Terms of Service
+                    </button>{' '}
+                    and{' '}
+                    <button
+                      type="button"
+                      onClick={() => openTermsModal('privacy')}
+                      className="text-blue-600 hover:text-blue-800 font-medium transition-colors underline"
+                    >
+                      Privacy Policy
+                    </button>
+                  </label>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-900 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                >
+                  {loading ? 'Creating Account...' : 'Create Account'}
+                </button>
+              </form>
+
+              {/* Sign In Link */}
+              <div className="mt-8 text-center">
+                <p className="text-slate-600">
+                  Already have an account?{' '}
+                  <a href="/login" className="text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                    Sign in
+                  </a>
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
+
+      {/* Terms Modal */}
+      <TermsModal
+        isOpen={isTermsModalOpen}
+        onClose={closeTermsModal}
+        contentType={modalContentType}
+      />
     </section>
   );
 };

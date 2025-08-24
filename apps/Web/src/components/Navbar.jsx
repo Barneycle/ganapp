@@ -1,1284 +1,226 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isEventsDropdownOpen, setIsEventsDropdownOpen] = useState(false);
-  const [isToolsDropdownOpen, setIsToolsDropdownOpen] = useState(false);
-  const [isReportsDropdownOpen, setIsReportsDropdownOpen] = useState(false);
-  const [isSettingsDropdownOpen, setIsSettingsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [isParticipantsEventsDropdownOpen, setIsParticipantsEventsDropdownOpen] = useState(false);
-  const [isParticipantsAttendanceDropdownOpen, setIsParticipantsAttendanceDropdownOpen] = useState(false);
-  const [isParticipantsSurveysDropdownOpen, setIsParticipantsSurveysDropdownOpen] = useState(false);
-  const [isParticipantsCertificatesDropdownOpen, setIsParticipantsCertificatesDropdownOpen] = useState(false);
-  const [isParticipantsProfileDropdownOpen, setIsParticipantsProfileDropdownOpen] = useState(false);
-  const location = useLocation();
-  const dropdownRef = useRef(null);
-  const toolsDropdownRef = useRef(null);
-  const reportsDropdownRef = useRef(null);
-  const settingsDropdownRef = useRef(null);
-  const profileDropdownRef = useRef(null);
-  const participantsEventsDropdownRef = useRef(null);
-  const participantsAttendanceDropdownRef = useRef(null);
-  const participantsSurveysDropdownRef = useRef(null);
-  const participantsCertificatesDropdownRef = useRef(null);
-  const participantsProfileDropdownRef = useRef(null);
+  const { user, signOut, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  const isActive = (path) => {
-    return location.pathname === path;
+  const handleSignOut = async () => {
+    try {
+      console.log('🔄 Starting sign out process...');
+      const result = await signOut();
+      console.log('🔄 Sign out result:', result);
+      
+      if (result && result.success) {
+        console.log('✅ Sign out successful, navigating to home...');
+        navigate('/');
+      } else {
+        console.error('❌ Sign out failed:', result?.error || 'Unknown error');
+      }
+    } catch (error) {
+      console.error('❌ Sign out error:', error);
+    }
   };
 
-  const isOrganizerRoute = () => {
-    return location.pathname.startsWith('/organizer') || 
-           location.pathname === '/create-event' || 
-           location.pathname === '/view-events';
-  };
-
-  const isParticipantsRoute = () => {
-    return location.pathname.startsWith('/participants') || 
-           location.pathname === '/events' || 
-           location.pathname === '/my-attendance' || 
-           location.pathname === '/surveys' || 
-           location.pathname === '/certificates' ||
-           location.pathname === '/profile';
-  };
-
-  const isAdminRoute = () => {
-    return location.pathname.startsWith('/admin') || 
-           location.pathname === '/attendance' || 
-           location.pathname === '/surveys' || 
-           location.pathname === '/certificates' ||
-           location.pathname === '/reports' ||
-           location.pathname === '/settings' ||
-           location.pathname === '/profile';
-  };
-
-  const toggleEventsDropdown = () => {
-    setIsEventsDropdownOpen(!isEventsDropdownOpen);
-    // Close other dropdowns
-    setIsToolsDropdownOpen(false);
-    setIsReportsDropdownOpen(false);
-    setIsSettingsDropdownOpen(false);
-    setIsProfileDropdownOpen(false);
-  };
-
-  const toggleToolsDropdown = () => {
-    setIsToolsDropdownOpen(!isToolsDropdownOpen);
-    // Close other dropdowns
-    setIsEventsDropdownOpen(false);
-    setIsReportsDropdownOpen(false);
-    setIsSettingsDropdownOpen(false);
-    setIsProfileDropdownOpen(false);
-  };
-
-  const toggleReportsDropdown = () => {
-    setIsReportsDropdownOpen(!isReportsDropdownOpen);
-    // Close other dropdowns
-    setIsEventsDropdownOpen(false);
-    setIsToolsDropdownOpen(false);
-    setIsSettingsDropdownOpen(false);
-    setIsProfileDropdownOpen(false);
-  };
-
-  const toggleSettingsDropdown = () => {
-    setIsSettingsDropdownOpen(!isSettingsDropdownOpen);
-    // Close other dropdowns
-    setIsEventsDropdownOpen(false);
-    setIsToolsDropdownOpen(false);
-    setIsReportsDropdownOpen(false);
-    setIsProfileDropdownOpen(false);
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   const toggleProfileDropdown = () => {
     setIsProfileDropdownOpen(!isProfileDropdownOpen);
-    // Close other dropdowns
-    setIsEventsDropdownOpen(false);
-    setIsToolsDropdownOpen(false);
-    setIsReportsDropdownOpen(false);
-    setIsSettingsDropdownOpen(false);
   };
 
-  const toggleParticipantsEventsDropdown = () => {
-    setIsParticipantsEventsDropdownOpen(!isParticipantsEventsDropdownOpen);
-    // Close other dropdowns
-    setIsParticipantsAttendanceDropdownOpen(false);
-    setIsParticipantsSurveysDropdownOpen(false);
-    setIsParticipantsCertificatesDropdownOpen(false);
-    setIsParticipantsProfileDropdownOpen(false);
-  };
-
-  const toggleParticipantsAttendanceDropdown = () => {
-    setIsParticipantsAttendanceDropdownOpen(!isParticipantsAttendanceDropdownOpen);
-    // Close other dropdowns
-    setIsParticipantsEventsDropdownOpen(false);
-    setIsParticipantsSurveysDropdownOpen(false);
-    setIsParticipantsCertificatesDropdownOpen(false);
-    setIsParticipantsProfileDropdownOpen(false);
-  };
-
-  const toggleParticipantsSurveysDropdown = () => {
-    setIsParticipantsSurveysDropdownOpen(!isParticipantsSurveysDropdownOpen);
-    // Close other dropdowns
-    setIsParticipantsEventsDropdownOpen(false);
-    setIsParticipantsAttendanceDropdownOpen(false);
-    setIsParticipantsCertificatesDropdownOpen(false);
-    setIsParticipantsProfileDropdownOpen(false);
-  };
-
-  const toggleParticipantsCertificatesDropdown = () => {
-    setIsParticipantsCertificatesDropdownOpen(!isParticipantsCertificatesDropdownOpen);
-    // Close other dropdowns
-    setIsParticipantsEventsDropdownOpen(false);
-    setIsParticipantsAttendanceDropdownOpen(false);
-    setIsParticipantsSurveysDropdownOpen(false);
-    setIsParticipantsProfileDropdownOpen(false);
-  };
-
-  const toggleParticipantsProfileDropdown = () => {
-    setIsParticipantsProfileDropdownOpen(!isParticipantsProfileDropdownOpen);
-    // Close other dropdowns
-    setIsParticipantsEventsDropdownOpen(false);
-    setIsParticipantsAttendanceDropdownOpen(false);
-    setIsParticipantsSurveysDropdownOpen(false);
-    setIsParticipantsCertificatesDropdownOpen(false);
-  };
-
-  // Close all dropdowns when route changes
-  useEffect(() => {
-    setIsEventsDropdownOpen(false);
-    setIsToolsDropdownOpen(false);
-    setIsReportsDropdownOpen(false);
-    setIsSettingsDropdownOpen(false);
+  const closeProfileDropdown = () => {
     setIsProfileDropdownOpen(false);
-    setIsParticipantsEventsDropdownOpen(false);
-    setIsParticipantsAttendanceDropdownOpen(false);
-    setIsParticipantsSurveysDropdownOpen(false);
-    setIsParticipantsCertificatesDropdownOpen(false);
-    setIsParticipantsProfileDropdownOpen(false);
-  }, [location.pathname]);
+  };
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsEventsDropdownOpen(false);
-      }
-      if (toolsDropdownRef.current && !toolsDropdownRef.current.contains(event.target)) {
-        setIsToolsDropdownOpen(false);
-      }
-      if (reportsDropdownRef.current && !reportsDropdownRef.current.contains(event.target)) {
-        setIsReportsDropdownOpen(false);
-      }
-      if (settingsDropdownRef.current && !settingsDropdownRef.current.contains(event.target)) {
-        setIsSettingsDropdownOpen(false);
-      }
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
-        setIsProfileDropdownOpen(false);
-      }
-      if (participantsEventsDropdownRef.current && !participantsEventsDropdownRef.current.contains(event.target)) {
-        setIsParticipantsEventsDropdownOpen(false);
-      }
-      if (participantsAttendanceDropdownRef.current && !participantsAttendanceDropdownRef.current.contains(event.target)) {
-        setIsParticipantsAttendanceDropdownOpen(false);
-      }
-      if (participantsSurveysDropdownRef.current && !participantsSurveysDropdownRef.current.contains(event.target)) {
-        setIsParticipantsSurveysDropdownOpen(false);
-      }
-      if (participantsCertificatesDropdownRef.current && !participantsCertificatesDropdownRef.current.contains(event.target)) {
-        setIsParticipantsCertificatesDropdownOpen(false);
-      }
-      if (participantsProfileDropdownRef.current && !participantsProfileDropdownRef.current.contains(event.target)) {
-        setIsParticipantsProfileDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Get user initials for profile circle
+  const getUserInitials = () => {
+    if (!user) return '?';
+    const firstName = user.first_name || '';
+    const lastName = user.last_name || '';
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || 'U';
+  };
 
   return (
-         <nav className="bg-gradient-to-r from-navy-600 via-navy-700 to-navy-600 text-white shadow-2xl border-b border-navy-500/50 backdrop-blur-sm">
+    <nav className="bg-gradient-to-r from-navy-600 via-navy-700 to-navy-600 text-white shadow-2xl border-b border-navy-500/50 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* Brand Name */}
-          <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent hover:from-navy-200 hover:via-white hover:to-navy-200 transition-all duration-300">
-            GanApp
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Link
-              to="/"
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 ${
-                isActive('/') 
-                  ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                  : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-              }`}
-              title="Return to home page"
-            >
-              Home
-            </Link>
-            
-            {isOrganizerRoute() ? (
-              // Organizer-specific menu
-              <>
-                {/* Events Dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={toggleEventsDropdown}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 flex items-center space-x-2 ${
-                      (isActive('/create-event') || isActive('/view-events')) 
-                        ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                        : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                    }`}
-                    title="Create and manage events (upcoming, ongoing, past)"
-                  >
-                    <span>Events</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform duration-300 ${isEventsDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Dropdown Menu */}
-                  {isEventsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-3 w-52 bg-gradient-to-b from-navy-700 to-navy-800 border border-navy-600/50 rounded-xl shadow-2xl shadow-navy-900/50 z-50 backdrop-blur-sm">
-                      <div className="py-3">
-                        <Link
-                          to="/view-events"
-                          onClick={() => setIsEventsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/view-events') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="View all events"
-                        >
-                          All Events
-                        </Link>
-                        <Link
-                          to="/create-event"
-                          onClick={() => setIsEventsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/create-event') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Create a new event"
-                        >
-                          Create Event
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                <Link
-                  to="/survey-analytics"
-                  className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 ${
-                    isActive('/survey-analytics') ? 'text-white' : 'text-gray-300'
-                  }`}
-                  title="View survey responses and analytics"
-                >
-                  Survey Analytics
-                </Link>
-              </>
-            ) : isAdminRoute() ? (
-              // Admin-specific menu
-              <>
-                {/* Events Dropdown */}
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={toggleEventsDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      (isActive('/events') || isActive('/create-event') || isActive('/view-events')) ? 'text-white' : 'text-gray-300'
-                    }`}
-                    title="Create and manage events (upcoming, ongoing, past)"
-                  >
-                    <span>Events</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isEventsDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Events Dropdown Menu */}
-                  {isEventsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
-                        <Link
-                          to="/events"
-                          onClick={() => setIsEventsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/events') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="View all events"
-                        >
-                          All Events
-                        </Link>
-                        <Link
-                          to="/create-event"
-                          onClick={() => setIsEventsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/create-event') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Create a new event"
-                        >
-                          Create Event
-                        </Link>
-                        <Link
-                          to="/manage-events"
-                          onClick={() => setIsEventsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/manage-events') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Manage ongoing and past events"
-                        >
-                          Manage Events
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Tools Dropdown */}
-                <div className="relative" ref={toolsDropdownRef}>
-                  <button
-                    onClick={toggleToolsDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      (isActive('/attendance') || isActive('/surveys') || isActive('/certificates')) ? 'text-white' : 'text-gray-300'
-                    }`}
-                    title="Administrative tools and utilities"
-                  >
-                    <span>Tools</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isToolsDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Tools Dropdown Menu */}
-                  {isToolsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
-                        <Link
-                          to="/attendance"
-                          onClick={() => setIsToolsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/attendance') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="QR check-ins, photo verification, admin overrides"
-                        >
-                          Attendance
-                        </Link>
-                        <Link
-                          to="/surveys"
-                          onClick={() => setIsToolsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/surveys') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Manage evaluation forms, view responses"
-                        >
-                          Surveys
-                        </Link>
-                        <Link
-                          to="/certificates"
-                          onClick={() => setIsToolsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/certificates') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Issue and track participant certificates"
-                        >
-                          Certificates
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Reports Dropdown */}
-                <div className="relative" ref={reportsDropdownRef}>
-                  <button
-                    onClick={toggleReportsDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      isActive('/reports') ? 'text-white' : 'text-gray-300'
-                    }`}
-                    title="Analytics dashboards, attendance trends, survey insights"
-                  >
-                    <span>Reports</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isReportsDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Reports Dropdown Menu */}
-                  {isReportsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
-                        <Link
-                          to="/survey-analytics"
-                          onClick={() => setIsReportsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/survey-analytics') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="View analytics dashboard"
-                        >
-                          Analytics Dashboard
-                        </Link>
-                        <Link
-                          to="/attendance-trends"
-                          onClick={() => setIsReportsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/attendance-trends') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="View attendance trends"
-                        >
-                          Attendance Trends
-                        </Link>
-                        <Link
-                          to="/survey-insights"
-                          onClick={() => setIsReportsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/survey-insights') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="View survey insights"
-                        >
-                          Survey Insights
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Settings Dropdown */}
-                <div className="relative" ref={settingsDropdownRef}>
-                  <button
-                    onClick={toggleSettingsDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      isActive('/settings') ? 'text-white' : 'text-gray-300'
-                    }`}
-                    title="System preferences, user management, customization"
-                  >
-                    <span>Settings</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isSettingsDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Settings Dropdown Menu */}
-                  {isSettingsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
-                        <Link
-                          to="/system-preferences"
-                          onClick={() => setIsSettingsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/system-preferences') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Configure system preferences"
-                        >
-                          System Preferences
-                        </Link>
-                        <Link
-                          to="/user-management"
-                          onClick={() => setIsSettingsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/user-management') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Manage user accounts and permissions"
-                        >
-                          User Management
-                        </Link>
-                        <Link
-                          to="/customization"
-                          onClick={() => setIsSettingsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/customization') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Customize system appearance and behavior"
-                        >
-                          Customization
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Profile Dropdown */}
-                <div className="relative" ref={profileDropdownRef}>
-                  <button
-                    onClick={toggleProfileDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      isActive('/profile') ? 'text-white' : 'text-gray-300'
-                    }`}
-                    title="Account settings, help, logout"
-                  >
-                    <span>Profile</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isProfileDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Profile Dropdown Menu */}
-                  {isProfileDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
-                        <Link
-                          to="/account-settings"
-                          onClick={() => setIsProfileDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/account-settings') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Manage account settings"
-                        >
-                          Account Settings
-                        </Link>
-                        <Link
-                          to="/help"
-                          onClick={() => setIsProfileDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/help') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Get help and support"
-                        >
-                          Help
-                        </Link>
-                        <Link
-                          to="/logout"
-                          onClick={() => setIsProfileDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/logout') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Logout from the system"
-                        >
-                          Logout
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : isParticipantsRoute() ? (
-              // Participants-specific menu
-              <>
-                {/* Events Dropdown */}
-                <div className="relative" ref={participantsEventsDropdownRef}>
-                  <button
-                    onClick={toggleParticipantsEventsDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      isActive('/events') ? 'text-white' : 'text-gray-300'
-                    }`}
-                    title="List of events you can join/register for"
-                  >
-                    <span>Events</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isParticipantsEventsDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Events Dropdown Menu */}
-                  {isParticipantsEventsDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
-                        <Link
-                          to="/events"
-                          onClick={() => setIsParticipantsEventsDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/events') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="List of events you can join/register for"
-                        >
-                          All Events
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* My Attendance Dropdown */}
-                <div className="relative" ref={participantsAttendanceDropdownRef}>
-                  <button
-                    onClick={toggleParticipantsAttendanceDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      isActive('/my-attendance') ? 'text-white' : 'text-gray-300'
-                    }`}
-                    title="View your attendance history and QR check-in status"
-                  >
-                    <span>My Attendance</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isParticipantsAttendanceDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* My Attendance Dropdown Menu */}
-                  {isParticipantsAttendanceDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
-                        <Link
-                          to="/my-attendance"
-                          onClick={() => setIsParticipantsAttendanceDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/my-attendance') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="View your attendance history and QR check-in status"
-                        >
-                          My Attendance
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Surveys Dropdown */}
-                <div className="relative" ref={participantsSurveysDropdownRef}>
-                  <button
-                    onClick={toggleParticipantsSurveysDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      isActive('/surveys') ? 'text-white' : 'text-gray-300'
-                    }`}
-                    title="Answer post-event evaluation forms"
-                  >
-                    <span>Surveys</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isParticipantsSurveysDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Surveys Dropdown Menu */}
-                  {isParticipantsSurveysDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
-                        <Link
-                          to="/surveys"
-                          onClick={() => setIsParticipantsSurveysDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/surveys') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Answer post-event evaluation forms"
-                        >
-                          Surveys
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Certificates Dropdown */}
-                <div className="relative" ref={participantsCertificatesDropdownRef}>
-                  <button
-                    onClick={toggleParticipantsCertificatesDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      isActive('/certificates') ? 'text-white' : 'text-gray-300'
-                    }`}
-                    title="Download and view your earned certificates"
-                  >
-                    <span>Certificates</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isParticipantsCertificatesDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Certificates Dropdown Menu */}
-                  {isParticipantsCertificatesDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
-                        <Link
-                          to="/certificates"
-                          onClick={() => setIsParticipantsCertificatesDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/certificates') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Download and view your earned certificates"
-                        >
-                          Certificates
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Profile Dropdown */}
-                <div className="relative" ref={participantsProfileDropdownRef}>
-                  <button
-                    onClick={toggleParticipantsProfileDropdown}
-                    className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 flex items-center space-x-1 ${
-                      isActive('/profile') ? 'text-white' : 'text-gray-300'
-                    }`}
-                    title="Account settings, help, logout"
-                  >
-                    <span>Profile</span>
-                    <svg
-                      className={`w-4 h-4 transition-transform ${isParticipantsProfileDropdownOpen ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  
-                  {/* Profile Dropdown Menu */}
-                  {isParticipantsProfileDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-48 bg-navy-700 border border-navy-600 rounded-lg shadow-lg z-50">
-                      <div className="py-2">
-                        <Link
-                          to="/profile"
-                          onClick={() => setIsParticipantsProfileDropdownOpen(false)}
-                          className={`block px-4 py-2 text-sm hover:bg-navy-600 transition-colors ${
-                            isActive('/profile') ? 'text-white bg-navy-600' : 'text-gray-300'
-                          }`}
-                          title="Account settings, help, logout"
-                        >
-                          Profile
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              // Default menu
-              <>
-                <Link
-                  to="/admin"
-                  className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 ${
-                    isActive('/admin') ? 'text-white' : 'text-gray-300'
-                  }`}
-                  title="Access administrative functions and tools"
-                >
-                  Admin
-                </Link>
-                <Link
-                  to="/organizer"
-                  className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 ${
-                    isActive('/organizer') ? 'text-white' : 'text-gray-300'
-                  }`}
-                  title="Manage events and surveys as an organizer"
-                >
-                  Organizers
-                </Link>
-                <Link
-                  to="/participants"
-                  className={`text-sm font-medium transition-colors duration-200 hover:text-gray-200 ${
-                    isActive('/participants') ? 'text-white' : 'text-gray-300'
-                  }`}
-                  title="View and manage participant information"
-                >
-                  Participants
-                </Link>
-              </>
-            )}
-            
-            {/* Login Button - Always visible at the end */}
-            <Link
-              to="/login"
-              className="px-6 py-3 bg-gradient-to-r from-navy-600 to-navy-700 hover:from-navy-500 hover:to-navy-600 text-white text-sm font-semibold rounded-xl transition-all duration-300 border border-navy-500/50 hover:border-navy-400 hover:shadow-lg hover:shadow-navy-600/25 hover:scale-105"
-              title="Login to your account"
-            >
-              Login
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent hover:from-navy-200 hover:via-white hover:to-navy-200 transition-all duration-300">
+              GanApp
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-3 rounded-xl text-gray-300 hover:text-white hover:bg-navy-700/50 transition-all duration-300 hover:scale-105 border border-navy-600/30 hover:border-navy-500"
-            title="Toggle mobile menu"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              {isMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-                     <div className="md:hidden bg-gradient-to-b from-navy-500 to-navy-600 border-t border-navy-400/50 backdrop-blur-sm">
-            <div className="px-6 py-8 space-y-6">
-              <Link
-                to="/"
-                onClick={() => setIsMenuOpen(false)}
-                className={`block text-base font-medium ${
-                  isActive('/') ? 'text-white' : 'text-gray-300'
-                } hover:text-white transition-colors`}
-                title="Return to home page"
-              >
+          {/* Desktop Navigation */}
+          <div className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-4">
+              <Link to="/" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
                 Home
               </Link>
-              
-              {isOrganizerRoute() ? (
-                // Organizer-specific mobile menu
-                <>
-                  {/* Events Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      Events
-                    </div>
-                    <Link
-                      to="/view-events"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/view-events') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="View all events"
-                    >
-                      All Events
-                    </Link>
-                    <Link
-                      to="/create-event"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/create-event') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Create a new event"
-                    >
-                      Create Event
-                    </Link>
-                  </div>
-                  
-                  <Link
-                    to="/survey-analytics"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`block text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                      isActive('/survey-analytics') 
-                        ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                        : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                    }`}
-                    title="View survey responses and analytics"
-                  >
-                    Survey Analytics
-                  </Link>
-                </>
-              ) : isAdminRoute() ? (
-                // Admin-specific mobile menu
-                <>
-                  {/* Events Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      Events
-                    </div>
-                    <Link
-                      to="/events"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/events') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="View all events"
-                    >
-                      All Events
-                    </Link>
-                    <Link
-                      to="/create-event"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/create-event') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Create a new event"
-                    >
-                      Create Event
-                    </Link>
-                    <Link
-                      to="/manage-events"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/manage-events') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Manage ongoing and past events"
-                    >
-                      Manage Events
-                    </Link>
-                  </div>
-                  
-                  {/* Tools Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      Tools
-                    </div>
-                    <Link
-                      to="/attendance"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/attendance') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="QR check-ins, photo verification, admin overrides"
-                    >
-                      Attendance
-                    </Link>
-                    <Link
-                      to="/surveys"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/surveys') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Manage evaluation forms, view responses"
-                    >
-                      Surveys
-                    </Link>
-                    <Link
-                      to="/certificates"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/certificates') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Issue and track participant certificates"
-                    >
-                      Certificates
-                    </Link>
-                  </div>
-                  
-                  {/* Reports Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      Reports
-                    </div>
-                    <Link
-                      to="/survey-analytics"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/survey-analytics') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="View analytics dashboard"
-                    >
-                      Analytics Dashboard
-                    </Link>
-                    <Link
-                      to="/attendance-trends"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/attendance-trends') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="View attendance trends"
-                    >
-                      Attendance Trends
-                    </Link>
-                    <Link
-                      to="/survey-insights"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/survey-insights') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="View survey insights"
-                    >
-                      Survey Insights
-                    </Link>
-                  </div>
-                  
-                  {/* Settings Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      Settings
-                    </div>
-                    <Link
-                      to="/system-preferences"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/system-preferences') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Configure system preferences"
-                    >
-                      System Preferences
-                    </Link>
-                    <Link
-                      to="/user-management"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/user-management') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Manage user accounts and permissions"
-                    >
-                      User Management
-                    </Link>
-                    <Link
-                      to="/customization"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/customization') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Customize system appearance and behavior"
-                    >
-                      Customization
-                    </Link>
-                  </div>
-                  
-                  {/* Profile Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      Profile
-                    </div>
-                    <Link
-                      to="/account-settings"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/account-settings') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Manage account settings"
-                    >
-                      Account Settings
-                    </Link>
-                    <Link
-                      to="/help"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/help') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Get help and support"
-                    >
-                      Help
-                    </Link>
-                    <Link
-                      to="/logout"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/logout') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Logout from the system"
-                    >
-                      Logout
-                    </Link>
-                  </div>
-                </>
-              ) : isParticipantsRoute() ? (
-                // Participants-specific mobile menu
-                <>
-                  {/* Events Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      Events
-                    </div>
-                    <Link
-                      to="/events"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/events') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="List of events you can join/register for"
-                    >
-                      All Events
-                    </Link>
-                  </div>
-                  
-                  {/* My Attendance Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      My Attendance
-                    </div>
-                    <Link
-                      to="/my-attendance"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/my-attendance') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="View your attendance history and QR check-in status"
-                    >
-                      My Attendance
-                    </Link>
-                  </div>
-                  
-                  {/* Surveys Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      Surveys
-                    </div>
-                    <Link
-                      to="/surveys"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/surveys') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Answer post-event evaluation forms"
-                    >
-                      Surveys
-                    </Link>
-                  </div>
-                  
-                  {/* Certificates Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      Certificates
-                    </div>
-                    <Link
-                      to="/certificates"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/certificates') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Download and view your earned certificates"
-                    >
-                      Certificates
-                    </Link>
-                  </div>
-                  
-                  {/* Profile Section */}
-                  <div className="space-y-3">
-                    <div className="text-sm font-semibold text-navy-300 uppercase tracking-wider border-l-4 border-navy-500 pl-3">
-                      Profile
-                    </div>
-                    <Link
-                      to="/profile"
-                      onClick={() => setIsMenuOpen(false)}
-                      className={`block pl-6 text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                        isActive('/profile') 
-                          ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                          : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                      }`}
-                      title="Account settings, help, logout"
-                    >
-                      Profile
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                // Default mobile menu
-                <>
-                  <Link
-                    to="/admin"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`block text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                      isActive('/admin') 
-                        ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                        : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                    }`}
-                    title="Access administrative functions and tools"
-                  >
-                    Admin
-                  </Link>
-                  <Link
-                    to="/organizer"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`block text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                      isActive('/organizer') 
-                        ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                        : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                    }`}
-                    title="Manage events and surveys as an organizer"
-                  >
-                    Organizers
-                  </Link>
-                  <Link
-                    to="/participants"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`block text-base font-medium rounded-lg px-3 py-2 transition-all duration-300 ${
-                      isActive('/participants') 
-                        ? 'text-white bg-navy-600/80 shadow-lg shadow-navy-600/25' 
-                        : 'text-gray-300 hover:text-white hover:bg-navy-700/50'
-                    }`}
-                    title="View and manage participant information"
-                  >
-                    Participants
-                  </Link>
-                </>
+              <Link to="/events" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Events
+              </Link>
+              <Link to="/surveys" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                Surveys
+              </Link>
+              {isAuthenticated && user?.role === 'admin' && (
+                <Link to="/admin" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                  Admin
+                </Link>
               )}
-              
-              {/* Login Button - Always visible at the end in mobile */}
-              <div className="pt-6 border-t border-navy-600/50">
+            </div>
+          </div>
+
+          {/* Desktop Profile/Login Section */}
+          <div className="hidden md:block">
+            {isAuthenticated ? (
+              <div className="relative">
+                <button
+                  onClick={toggleProfileDropdown}
+                  className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors focus:outline-none"
+                >
+                  <div className="w-10 h-10 bg-gradient-to-r from-navy-400 to-navy-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-md hover:shadow-lg transition-shadow border border-navy-300/50">
+                    {getUserInitials()}
+                  </div>
+                </button>
+
+                {/* Profile Dropdown */}
+                {isProfileDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-navy-700 rounded-xl shadow-xl border border-navy-600/50 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-navy-600/50">
+                      <p className="text-sm font-medium text-white">{user?.first_name} {user?.last_name}</p>
+                      <p className="text-xs text-gray-300">{user?.email}</p>
+                      <div className="flex items-center mt-1">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          user?.user_type === 'psu-student' ? 'bg-blue-100 text-blue-800' :
+                          user?.user_type === 'psu-employee' ? 'bg-green-100 text-green-800' :
+                          'bg-purple-100 text-purple-800'
+                        }`}>
+                          {user?.user_type}
+                        </span>
+                        <span className={`ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          user?.role === 'admin' ? 'bg-red-100 text-red-800' :
+                          user?.role === 'organizer' ? 'bg-orange-100 text-orange-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {user?.role}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-navy-600 transition-colors"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                className="px-6 py-3 bg-gradient-to-r from-navy-600 to-navy-700 hover:from-navy-500 hover:to-navy-600 text-white text-sm font-semibold rounded-xl transition-all duration-300 border border-navy-500/50 hover:border-navy-400 hover:shadow-lg hover:shadow-navy-600/25 hover:scale-105"
+              >
+                Login
+              </Link>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={toggleMobileMenu}
+              className="text-gray-300 hover:text-white focus:outline-none focus:text-white"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Navigation */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-navy-600 border-t border-navy-500/50">
+            <Link
+              to="/"
+              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
+              to="/events"
+              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Events
+            </Link>
+            <Link
+              to="/surveys"
+              className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Surveys
+            </Link>
+            {isAuthenticated && user?.role === 'admin' && (
+              <Link
+                to="/admin"
+                className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Admin
+              </Link>
+            )}
+            
+            {/* Mobile Profile/Login Section */}
+            {isAuthenticated ? (
+              <div className="pt-4 border-t border-navy-500/50">
+                <div className="flex items-center px-3 py-2">
+                  <div className="w-10 h-10 bg-gradient-to-r from-navy-400 to-navy-600 rounded-full flex items-center justify-center text-white font-semibold text-lg mr-3 border border-navy-300/50">
+                    {getUserInitials()}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">{user?.first_name} {user?.last_name}</p>
+                    <p className="text-xs text-gray-300">{user?.email}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full text-left px-3 py-2 text-sm text-red-300 hover:bg-navy-500 transition-colors rounded-md"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="pt-4 border-t border-navy-500/50">
                 <Link
                   to="/login"
-                  onClick={() => setIsMenuOpen(false)}
                   className="block w-full px-6 py-4 bg-gradient-to-r from-navy-600 to-navy-700 hover:from-navy-500 hover:to-navy-600 text-white text-lg font-semibold rounded-xl transition-all duration-300 border border-navy-500/50 hover:border-navy-400 hover:shadow-lg hover:shadow-navy-600/25 text-center"
-                  title="Login to your account"
+                  onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
                 </Link>
               </div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Click outside to close profile dropdown */}
+      {isProfileDropdownOpen && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={closeProfileDropdown}
+        />
+      )}
     </nav>
   );
 };

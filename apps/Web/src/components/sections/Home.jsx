@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import techcon from '../../assets/techcon.png';
+import { useAuth } from '../../contexts/AuthContext';
 // import { EventService } from '@ganapp/shared';
 
 export const Home = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false); // Set to false to skip loading
   const [error, setError] = useState(null);
+  const { user, isAuthenticated, signOut } = useAuth();
 
   useEffect(() => {
     // Set some mock data instead
@@ -89,14 +91,11 @@ export const Home = () => {
   return (
     <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Hero Section */}
+        {/* Welcome Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-800 mb-6">
-            Welcome to GanApp
-          </h1>
-          <p className="text-slate-600 text-lg sm:text-xl max-w-3xl mx-auto">
-            Your comprehensive platform for event management, surveys, and analytics
-          </p>
+          <h1 className="text-4xl font-bold text-slate-800 mb-4">Welcome to GanApp</h1>
+          <p className="text-xl text-slate-600">Manage your events and surveys with ease</p>
+          
         </div>
 
         {/* Featured Event Banner */}

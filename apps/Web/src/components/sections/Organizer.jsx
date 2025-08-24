@@ -26,15 +26,7 @@ export const Organizer = () => {
   return (
     <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent mb-4">
-            Event Organizer Dashboard
-          </h1>
-          <p className="text-slate-600 text-lg sm:text-xl max-w-3xl mx-auto">
-            Manage your events, view details, and access important resources
-          </p>
-        </div>
+
 
         {/* Featured Event Banner */}
         <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden mb-12">
