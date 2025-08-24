@@ -9,6 +9,7 @@ export default defineConfig({
     alias: {
       "@ganapp/shared": path.resolve(__dirname, "../../packages/shared"),
     },
+    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
   },
   build: {
     rollupOptions: {
@@ -20,10 +21,20 @@ export default defineConfig({
       },
     },
     commonjsOptions: {
-      include: [/node_modules/],
+      include: [/node_modules/, /packages\/shared/],
     },
   },
   optimizeDeps: {
     include: ['@supabase/supabase-js'],
+    force: true,
+    esbuildOptions: {
+      resolveExtensions: ['.ts', '.js', '.tsx', '.jsx'],
+    },
+  },
+  ssr: {
+    noExternal: ['@ganapp/shared'],
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
   },
 });

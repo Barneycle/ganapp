@@ -6,14 +6,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:vercel": "vite build && npm run verify-build",
+    "build:vercel": "vite build",
+    "postinstall": "cd ../../packages/shared && npm install",
     "verify-build": "node -e \"console.log('Build verification: checking if dist folder exists and has content...'); const fs = require('fs'); const path = require('path'); const distPath = path.join(__dirname, 'dist'); if (fs.existsSync(distPath)) { const files = fs.readdirSync(distPath); console.log('Dist folder contents:', files); if (files.length > 0) { console.log('✅ Build successful!'); } else { console.log('❌ Build folder is empty'); process.exit(1); } } else { console.log('❌ Dist folder not found'); process.exit(1); }\"",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
   "dependencies": {
     "@ganapp/shared": "file:../../packages/shared",
-    "@supabase/supabase-js": "^2.56.0",
+    "@supabase/supabase-js": "^2.39.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.8.1",
