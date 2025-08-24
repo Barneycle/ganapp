@@ -13,13 +13,13 @@ export default defineConfig({
   optimizeDeps: {
     include: ["@supabase/supabase-js"],
   },
-  server: {
-    fs: {
-      // Allow both the app root and shared package
-      allow: [
-        path.resolve(__dirname, "."), // Apps/Web
-        path.resolve(__dirname, "../../packages/shared"),
-      ],
+  build: {
+    rollupOptions: {
+      // Force Rollup to bundle this instead of skipping it
+      dedupe: ["@supabase/supabase-js"],
+    },
+    commonjsOptions: {
+      include: [/packages\/shared/, /node_modules/],
     },
   },
 });
