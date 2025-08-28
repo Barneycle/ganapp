@@ -8,7 +8,7 @@ export interface User {
   user_type: 'psu-student' | 'psu-employee' | 'outside'
   role: 'participant' | 'organizer' | 'admin'
   created_at: string
-  updated_at: string
+  updated_at: string | undefined
 }
 
 export interface AuthResponse {
@@ -193,10 +193,8 @@ export class UserService {
           console.log('🗑️ UserService: Removed sessionStorage key:', key);
         });
         
-        // Clear cookies
-        document.cookie.split(";").forEach(function(c) { 
-          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-        });
+        // Note: Cookie clearing removed for React Native compatibility
+        // Cookies are not available in React Native environment
         
         console.log('🔄 UserService: Manual cleanup completed');
       } catch (cleanupError) {

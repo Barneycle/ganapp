@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "main": "index.ts",
+  "types": "index.ts",
+  "scripts": {
+    "build": "echo 'No build needed - Metro handles TypeScript directly'"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0"
   },
