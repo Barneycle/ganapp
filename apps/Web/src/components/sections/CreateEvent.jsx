@@ -2166,7 +2166,10 @@ export const CreateEvent = () => {
             </button>
           </div>
         </form>
+<<<<<<< Updated upstream
       </div>
     </section>
   );
 };
+=======
+>>>>>>> Stashed changes
