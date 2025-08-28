@@ -3,13 +3,13 @@
   "private": true,
   "version": "1.0.0",
   "workspaces": [
-    "Apps/*",
+    "apps/*",
     "packages/*"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev:web": "cd Apps/Web && npm start",
-    "dev:mobile": "cd Apps/Mobile && npm start",
+    "dev:web": "cd apps/web && npm start",
+    "dev:mobile": "cd apps/mobile && npm start",
     "install:all": "npm install"
   },
   "repository": {
