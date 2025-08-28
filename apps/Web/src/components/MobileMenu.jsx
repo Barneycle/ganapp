@@ -41,7 +41,7 @@ export const MobileMenu = ({ menuOpen, setMenuOpen }) => {
   if (!menuOpen) return null;
 
   return (
-    <div className="md:hidden bg-navy-700 border-t border-navy-600">
+    <div className="md:hidden bg-blue-900 border-t border-blue-800">
       <div className="px-4 py-6 space-y-4">
         <Link
           to="/"

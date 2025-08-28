@@ -24,8 +24,10 @@ export const Admin = () => {
     setError('');
     
     try {
-      const userList = await UserService.getAllUsers();
-      setUsers(userList);
+      // Note: Admin functions require server-side implementation
+      // For now, we'll show a placeholder message
+      setError('Admin functions require server-side implementation. getAllUsers() is not available client-side.');
+      setUsers([]); // Empty array since we can't fetch users
     } catch (err) {
       setError('Failed to load users. Admin functions require server-side implementation.');
     } finally {
@@ -51,27 +53,9 @@ export const Admin = () => {
     setError('');
     
     try {
-      const result = await UserService.updateUserMetadata(editingUser.id, {
-        first_name: editingUser.first_name,
-        last_name: editingUser.last_name,
-        user_type: editingUser.user_type,
-        role: editingUser.role
-      });
-
-      if (result.success) {
-        // Update the local users list
-        setUsers(prevUsers => 
-          prevUsers.map(u => 
-            u.id === editingUser.id 
-              ? { ...u, ...editingUser }
-              : u
-          )
-        );
-        setEditingUser(null);
-        alert('User updated successfully!');
-      } else {
-        setError(result.error || 'Failed to update user');
-      }
+      // Note: Admin functions require server-side implementation
+      // For now, we'll show a placeholder message
+      setError('Admin functions require server-side implementation. updateUserMetadata() is not available client-side.');
     } catch (err) {
       setError('Failed to update user. Admin functions require server-side implementation.');
     } finally {

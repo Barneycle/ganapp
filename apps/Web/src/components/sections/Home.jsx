@@ -91,11 +91,11 @@ export const Home = () => {
   return (
     <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
         {/* Welcome Section */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-slate-800 mb-4">Welcome to GanApp</h1>
           <p className="text-xl text-slate-600">Manage your events and surveys with ease</p>
-          
         </div>
 
         {/* Featured Event Banner */}
@@ -118,60 +118,55 @@ export const Home = () => {
               {featuredEvent.description}
             </p>
           </div>
-          
-          {/* Divider */}
-          <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-4 border-t border-slate-100">
-            <div className="flex items-center justify-center">
-              <div className="w-16 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
-              <div className="mx-4 px-3 py-1 bg-white rounded-full border border-slate-200">
-                <span className="text-xs font-medium text-slate-600 uppercase tracking-wide">Event Details</span>
-              </div>
-              <div className="w-16 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent"></div>
-            </div>
-          </div>
         </div>
 
-        {/* Event Details Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-slate-800">Date</h4>
-                <p className="text-slate-600">{formatDate(featuredEvent.start_date)}</p>
-              </div>
-            </div>
+        {/* Event Details Card */}
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 p-6 mb-8">
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-bold text-slate-800">Event Details</h3>
           </div>
+          
+          <div className="max-w-4xl mx-auto">
+            {/* Second Row (3 boxes) */}
+            <div className="grid grid-cols-3 gap-6">
+              <div className="group relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-50 to-pink-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative p-6 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 text-white flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-bold text-slate-800 mb-2">Date</h4>
+                  <p className="text-base text-slate-600 font-medium">{formatDate(featuredEvent.start_date)}</p>
+                </div>
+              </div>
 
-          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="group relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-50 to-red-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative p-6 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 text-white flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-bold text-slate-800 mb-2">Time</h4>
+                  <p className="text-base text-slate-600 font-medium">{formatTime(featuredEvent.start_time)} - {formatTime(featuredEvent.end_time)}</p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-lg font-semibold text-slate-800">Time</h4>
-                <p className="text-slate-600">{formatTime(featuredEvent.start_time)} - {formatTime(featuredEvent.end_time)}</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 p-6">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-600 to-blue-800 text-white flex items-center justify-center">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-slate-800">Venue</h4>
-                <p className="text-slate-600">{featuredEvent.venue || 'TBA'}</p>
+              <div className="group relative overflow-hidden bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-50 to-blue-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative p-6 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 text-white flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-bold text-slate-800 mb-2">Venue</h4>
+                  <p className="text-base text-slate-600 font-medium">{featuredEvent.venue || 'TBA'}</p>
+                </div>
               </div>
             </div>
           </div>

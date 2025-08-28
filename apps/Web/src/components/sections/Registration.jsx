@@ -473,7 +473,7 @@ export const Registration = () => {
                       onClick={() => openTermsModal('terms')}
                       className="text-blue-600 hover:text-blue-800 font-medium transition-colors underline"
                     >
-                      Terms of Service
+                      Terms and Conditions
                     </button>{' '}
                     and{' '}
                     <button

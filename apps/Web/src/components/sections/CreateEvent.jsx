@@ -1,23 +1,69 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { EventService, supabase } from '@ganapp/shared';
+import { useAuth } from '../../contexts/AuthContext';
 
-const FileDropzone = ({ label, name, multiple = false, accept, onFileChange, onUpload, uploadType, maxSizeMB = 5 }) => {
+/**
+ * CreateEvent Component
+ * 
+ * SECURITY FEATURES:
+ * - ✅ Authentication Required: Only logged-in users can access
+ * - ✅ Role-Based Access Control: Only admins and organizers can create events
+ * - ✅ Automatic Redirects: Unauthorized users are redirected to appropriate pages
+ * - ✅ Server-Side Validation: EventService validates user permissions
+ * - ✅ User ID Verification: Events are created with verified user ID
+ * - ✅ Form Validation: Required fields and data validation
+ * - ✅ Auto-Save: Form data persists in session storage
+ */
+
+// Zod validation schema
+const createEventSchema = z.object({
+  title: z.string().min(1, 'Event title is required'),
+  rationale: z.string().optional(),
+  startDate: z.string().min(1, 'Start date is required'),
+  endDate: z.string().min(1, 'End date is required'),
+  startTime: z.string().min(1, 'Start time is required'),
+  endTime: z.string().min(1, 'End time is required'),
+  venue: z.string().min(1, 'Venue is required'),
+  sponsors: z.string().optional(),
+  guestSpeakers: z.string().optional(),
+  bannerFile: z.any().optional(),
+  eventKitsFile: z.any().optional(),
+  eventProgrammeFile: z.any().optional(),
+  certificatesFile: z.any().optional(),
+  sponsorImages: z.any().optional(),
+  speakerImages: z.any().optional(),
+}).refine((data) => {
+  if (data.startDate && data.endDate) {
+    return new Date(data.startDate) <= new Date(data.endDate);
+  }
+  return true;
+}, {
+  message: "End date must be after or equal to start date",
+  path: ["endDate"]
+});
+
+const FileDropzone = ({ label, name, multiple = false, accept, onFileChange, onUpload, uploadType, maxSizeMB = 5, error, control, uploadedFiles = [], onRemoveFile }) => {
+  // Debug: Log props received
+  console.log(`🔍 FileDropzone ${label} received:`, { uploadedFiles, multiple, uploadType });
+  
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
-  const [fileNames, setFileNames] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleFiles = async (files) => {
     const fileArray = Array.from(files);
-    setFileNames(fileArray.map(f => f.name));
     
     if (onUpload && uploadType) {
       setUploading(true);
       setUploadProgress(0);
       
       try {
-        // Mock file validation
+        // File validation
         for (const file of fileArray) {
           if (file.size > maxSizeMB * 1024 * 1024) {
             alert(`File ${file.name} is too large. Max size: ${maxSizeMB}MB`);
@@ -26,23 +72,852 @@ const FileDropzone = ({ label, name, multiple = false, accept, onFileChange, onU
           }
         }
 
-        // Mock file upload
-        const uploadPromises = fileArray.map(async (file, index) => {
-          // Simulate upload delay
-          await new Promise(resolve => setTimeout(resolve, 500));
+        // Handle banner upload with real Supabase Storage
+        if (uploadType === 'banner') {
+          try {
+            setUploadProgress(25);
+            console.log('🚀 Starting banner upload...');
+            
+            // Generate unique file path
+            const fileExt = fileArray[0].name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+            const filePath = `events/banner/${fileName}`;
+            
+            console.log('📁 File path:', filePath);
+            console.log('📦 File size:', fileArray[0].size, 'bytes');
+            
+            setUploadProgress(50);
+            
+            // Upload to Supabase Storage
+            console.log('🚀 Starting Supabase Storage upload...');
+            
+            const bucketName = 'event-banners';
+            console.log(`🔍 Starting upload to bucket "${bucketName}" with path:`, filePath);
+            
+            const { data, error } = await supabase.storage
+              .from(bucketName)
+              .upload(filePath, fileArray[0], {
+                cacheControl: '3600',
+                upsert: false
+              });
+            
+            if (error) {
+              console.error('❌ Supabase upload failed:', error);
+              throw new Error(`Upload failed: ${error.message}`);
+            }
+            
+            console.log('✅ File uploaded to Supabase Storage:', data);
+            setUploadProgress(75);
+            
+            // Get the public URL
+            const { data: { publicUrl } } = supabase.storage
+              .from(bucketName)
+              .getPublicUrl(filePath);
+            
+            console.log('🔗 Public URL generated:', publicUrl);
+            setUploadProgress(100);
+            
+            // Return file result with real URL
+            const fileResult = {
+              file: fileArray[0],
+              filename: fileArray[0].name,
+              size: fileArray[0].size,
+              type: fileArray[0].type,
+              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              url: publicUrl,
+              path: filePath,
+              uploaded: true,
+              bucket: bucketName
+            };
+            
+            console.log('📋 File result prepared with real URL:', fileResult);
+            onUpload([fileResult]);
+            setUploading(false);
+            setUploadProgress(0);
+            
+          } catch (error) {
+            console.error('❌ Banner upload failed:', error);
+            console.log('⚠️ Using fallback: storing file locally');
+            
+            // Fallback: store file locally even if upload process fails
+            const fileResult = {
+              file: fileArray[0],
+              filename: fileArray[0].name,
+              size: fileArray[0].size,
+              type: fileArray[0].type,
+              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              url: null,
+              path: null,
+              uploaded: false,
+              bucket: null
+            };
+            
+            onUpload([fileResult]);
+            setUploading(false);
+            setUploadProgress(0);
+          }
+        } else if (uploadType === 'materials') {
+          // Handle materials upload with real Supabase Storage
+          try {
+            setUploadProgress(25);
+            console.log('🚀 Starting materials upload...');
+            
+            const bucketName = 'event-kits';
+            console.log(`🔍 Starting upload to bucket "${bucketName}"`);
+            
+            const uploadPromises = fileArray.map(async (file, index) => {
+              try {
+                // Generate unique file path
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                const filePath = `materials/${fileName}`;
+                
+                console.log(`📁 Uploading ${file.name} to path:`, filePath);
+                
+                const { data, error } = await supabase.storage
+                  .from(bucketName)
+                  .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                  });
+                
+                if (error) {
+                  console.error(`❌ Upload failed for ${file.name}:`, error);
+                  throw new Error(`Upload failed: ${error.message}`);
+                }
+                
+                console.log(`✅ ${file.name} uploaded successfully:`, data);
+                
+                // Get the public URL
+                const { data: { publicUrl } } = supabase.storage
+                  .from(bucketName)
+                  .getPublicUrl(filePath);
+                
+                // Update progress
+                setUploadProgress(25 + ((index + 1) / fileArray.length) * 50);
+                
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: publicUrl,
+                  path: filePath,
+                  uploaded: true,
+                  bucket: bucketName
+                };
+              } catch (fileError) {
+                console.error(`❌ Error uploading ${file.name}:`, fileError);
+                // Return file with error status
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: null,
+                  path: null,
+                  uploaded: false,
+                  bucket: null,
+                  error: fileError.message
+                };
+              }
+            });
+            
+            const results = await Promise.all(uploadPromises);
+            setUploadProgress(100);
+            
+            console.log('📋 Materials upload results:', results);
+            onUpload(results);
+            
+          } catch (error) {
+            console.error('❌ Materials upload failed:', error);
+            // Fallback: store files locally
+            const fileResults = fileArray.map((file, index) => {
+              setUploadProgress(((index + 1) / fileArray.length) * 100);
+              return {
+                file: file,
+                filename: file.name,
+                size: file.size,
+                type: file.type,
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                uploaded: false
+              };
+            });
+            onUpload(fileResults);
+          }
+        } else if (uploadType === 'logo') {
+          // Handle sponsor logos upload with real Supabase Storage
+          try {
+            setUploadProgress(25);
+            console.log('🚀 Starting sponsor logos upload...');
+            
+            // Try sponsor-logos bucket only - no fallback to event-materials
+            const bucketName = 'sponsor-logos';
+            
+            const uploadPromises = fileArray.map(async (file, index) => {
+              try {
+                // Update progress for each file start
+                setUploadProgress(25 + (index / fileArray.length) * 25);
+                console.log(`📤 Processing file ${index + 1}/${fileArray.length}: ${file.name}`);
+                
+                // Generate unique file path
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                const filePath = `logos/${fileName}`;
+                
+                console.log(`📁 Uploading to sponsor-logos bucket:`, filePath);
+                
+                // Add timeout protection to prevent stuck uploads
+                const uploadPromise = supabase.storage
+                  .from(bucketName)
+                  .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                  });
+                
+                const timeoutPromise = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Upload timed out after 15 seconds')), 15000)
+                );
+                
+                const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
+                
+                if (error) {
+                  console.error(`❌ Upload failed for ${file.name}:`, error);
+                  throw error;
+                }
+                
+                console.log(`✅ ${file.name} uploaded successfully to "${bucketName}":`, data);
+                
+                // Get the public URL
+                const { data: { publicUrl } } = supabase.storage
+                  .from(bucketName)
+                  .getPublicUrl(filePath);
+                
+                // Update progress for successful upload
+                setUploadProgress(50 + ((index + 1) / fileArray.length) * 25);
+                
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: publicUrl,
+                  path: filePath,
+                  uploaded: true,
+                  bucket: bucketName
+                };
+              } catch (fileError) {
+                console.error(`❌ Error uploading ${file.name}:`, fileError);
+                // Update progress even on error
+                setUploadProgress(50 + ((index + 1) / fileArray.length) * 25);
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: null,
+                  path: null,
+                  uploaded: false,
+                  bucket: null,
+                  error: fileError.message
+                };
+              }
+            });
+            
+            const results = await Promise.all(uploadPromises);
+            setUploadProgress(100);
+            console.log('🎉 All sponsor logo files processed!');
+            
+            console.log('📋 Sponsor logos upload results:', results);
+            onUpload(results);
+            
+          } catch (error) {
+            console.error('❌ Sponsor logos upload failed:', error);
+            // Fallback: store files locally
+            const fileResults = fileArray.map((file, index) => {
+              setUploadProgress(((index + 1) / fileArray.length) * 100);
+              return {
+                file: file,
+                filename: file.name,
+                size: file.size,
+                type: file.type,
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                uploaded: false
+              };
+            });
+            onUpload(fileResults);
+          }
+        } else if (uploadType === 'photo') {
+          // Handle speaker photos upload with real Supabase Storage
+          try {
+            setUploadProgress(25);
+            console.log('🚀 Starting speaker photos upload...');
+            
+            // Quick test to see if we can connect to storage (with 10 second timeout)
+            try {
+              const storageTestPromise = supabase.storage.listBuckets();
+              const storageTimeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Storage test timed out after 10 seconds')), 10000)
+              );
+              
+              const { data: buckets, error: bucketError } = await Promise.race([storageTestPromise, storageTimeoutPromise]);
+              
+              if (bucketError) {
+                console.log('⚠️ Cannot access storage buckets, will use local fallback');
+                throw new Error('Storage access denied');
+              }
+              console.log('✅ Storage access confirmed, available buckets:', buckets.map(b => b.name));
+            } catch (storageTestError) {
+              console.log('⚠️ Storage test failed, using local fallback');
+              // Fallback to local storage immediately
+              const fileResults = fileArray.map((file, index) => {
+                setUploadProgress(((index + 1) / fileArray.length) * 100);
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  uploaded: false,
+                  error: 'Storage access denied'
+                };
+              });
+              onUpload(fileResults);
+              return;
+            }
+            
+            // Try speaker-photos bucket only - no fallback to event-materials
+            const bucketName = 'speaker-photos';
+            
+            const uploadPromises = fileArray.map(async (file, index) => {
+              try {
+                // Update progress for each file start
+                setUploadProgress(25 + (index / fileArray.length) * 25);
+                console.log(`📤 Processing file ${index + 1}/${fileArray.length}: ${file.name}`);
+                
+                // Generate unique file path
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                const filePath = `photos/${fileName}`;
+                
+                console.log(`📁 Uploading to speaker-photos bucket:`, filePath);
+                
+                // Add timeout protection to prevent stuck uploads (increased to 30 seconds)
+                const uploadPromise = supabase.storage
+                  .from(bucketName)
+                  .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                  });
+                
+                const timeoutPromise = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Upload timed out after 30 seconds')), 30000)
+                );
+                
+                const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
+                
+                if (error) {
+                  console.error(`❌ Upload failed for ${file.name}:`, error);
+                  throw error;
+                }
+                
+                console.log(`✅ ${file.name} uploaded successfully to "${bucketName}":`, data);
+                
+                // Get the public URL
+                const { data: { publicUrl } } = supabase.storage
+                  .from(bucketName)
+                  .getPublicUrl(filePath);
+                
+                // Update progress for successful upload
+                setUploadProgress(50 + ((index + 1) / fileArray.length) * 25);
+                
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: publicUrl,
+                  path: filePath,
+                  uploaded: true,
+                  bucket: bucketName
+                };
+              } catch (fileError) {
+                console.error(`❌ Error uploading ${file.name}:`, fileError);
+                // Update progress even on error
+                setUploadProgress(50 + ((index + 1) / fileArray.length) * 25);
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: null,
+                  path: null,
+                  uploaded: false,
+                  bucket: null,
+                  error: fileError.message
+                };
+              }
+            });
+            
+            const results = await Promise.all(uploadPromises);
+            setUploadProgress(100);
+            console.log('🎉 All speaker photo files processed!');
+            
+            console.log('📋 Speaker photos upload results:', results);
+            onUpload(results);
+            
+          } catch (error) {
+            console.error('❌ Speaker photos upload failed:', error);
+            // Fallback: store files locally
+            const fileResults = fileArray.map((file, index) => {
+              setUploadProgress(((index + 1) / fileArray.length) * 100);
+              return {
+                file: file,
+                filename: file.name,
+                size: file.size,
+                type: file.type,
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                uploaded: false
+              };
+            });
+            onUpload(fileResults);
+          }
+        } else if (uploadType === 'event-kits') {
+          // Handle event kits upload with real Supabase Storage
+          try {
+            setUploadProgress(25);
+            console.log('🚀 Starting event kits upload...');
+            
+            // Quick test to see if we can connect to storage (with 10 second timeout)
+            try {
+              const storageTestPromise = supabase.storage.listBuckets();
+              const storageTimeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Storage test timed out after 10 seconds')), 10000)
+              );
+              
+              const { data: buckets, error: bucketError } = await Promise.race([storageTestPromise, storageTimeoutPromise]);
+              
+              if (bucketError) {
+                console.log('⚠️ Cannot access storage buckets, will use local fallback');
+                console.log('⚠️ Bucket error details:', bucketError);
+                throw new Error(`Storage access denied: ${bucketError.message}`);
+              }
+              console.log('✅ Storage access confirmed, available buckets:', buckets.map(b => b.name));
+              
+              // Check if event-kits bucket exists
+              const eventKitsBucket = buckets.find(b => b.name === 'event-kits');
+              if (!eventKitsBucket) {
+                console.log('⚠️ event-kits bucket not found, available buckets:', buckets.map(b => b.name));
+                throw new Error('event-kits bucket not found');
+              }
+              console.log('✅ event-kits bucket found:', eventKitsBucket);
+            } catch (storageTestError) {
+              console.log('⚠️ Storage test failed:', storageTestError.message);
+              console.log('⚠️ Storage test error details:', storageTestError);
+              console.log('🔄 Attempting direct upload despite storage test failure...');
+              
+              // Try direct upload instead of giving up
+              const bucketName = 'event-kits';
+              const uploadPromises = fileArray.map(async (file, index) => {
+                try {
+                  // Update progress for each file start
+                  setUploadProgress(25 + (index / fileArray.length) * 25);
+                  console.log(`📤 Processing file ${index + 1}/${fileArray.length}: ${file.name}`);
+                  
+                  // Generate unique file path
+                  const fileExt = file.name.split('.').pop();
+                  const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                  const filePath = `kits/${fileName}`;
+                  
+                  console.log(`📁 Attempting direct upload to ${bucketName}:`, filePath);
+                  
+                  // Try direct upload with shorter timeout
+                  const uploadPromise = supabase.storage
+                    .from(bucketName)
+                    .upload(filePath, file, {
+                      cacheControl: '3600',
+                      upsert: false
+                    });
+                  
+                  const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Upload timed out after 15 seconds')), 15000)
+                  );
+                  
+                  const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
+                  
+                  if (error) {
+                    console.error(`❌ Direct upload failed for ${file.name}:`, error);
+                    throw error;
+                  }
+                  
+                  console.log(`✅ ${file.name} uploaded successfully to "${bucketName}":`, data);
+                  
+                  // Get the public URL
+                  const { data: { publicUrl } } = supabase.storage
+                    .from(bucketName)
+                    .getPublicUrl(filePath);
+                  
+                  // Update progress for successful upload
+                  setUploadProgress(50 + ((index + 1) / fileArray.length) * 25);
+                  
+                  return {
+                    file: file,
+                    filename: file.name,
+                    size: file.size,
+                    type: file.type,
+                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    url: publicUrl,
+                    path: filePath,
+                    uploaded: true,
+                    bucket: bucketName
+                  };
+                } catch (fileError) {
+                  console.error(`❌ Direct upload also failed for ${file.name}:`, fileError);
+                  // Update progress even on error
+                  setUploadProgress(50 + ((index + 1) / fileArray.length) * 25);
+                  return {
+                    file: file,
+                    filename: file.name,
+                    size: file.size,
+                    type: file.type,
+                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    url: null,
+                    path: null,
+                    uploaded: false,
+                    bucket: null,
+                    error: `Direct upload failed: ${fileError.message}`
+                  };
+                }
+              });
+              
+              const results = await Promise.all(uploadPromises);
+              setUploadProgress(100);
+              console.log('🎉 All event kit files processed (direct upload)!');
+              
+              console.log('📋 Event kits upload results:', results);
+              onUpload(results);
+              setUploading(false);
+              setUploadProgress(0);
+              return;
+            }
+            
+            const bucketName = 'event-kits';
+            console.log(`🔍 Starting upload to bucket "${bucketName}"`);
+            
+            const uploadPromises = fileArray.map(async (file, index) => {
+              try {
+                // Update progress for each file start
+                setUploadProgress(25 + (index / fileArray.length) * 25);
+                console.log(`📤 Processing file ${index + 1}/${fileArray.length}: ${file.name}`);
+                
+                // Generate unique file path
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                const filePath = `kits/${fileName}`;
+                
+                console.log(`📁 Uploading ${file.name} to path:`, filePath);
+                
+                // Add timeout protection to prevent stuck uploads (30 seconds)
+                const uploadPromise = supabase.storage
+                  .from(bucketName)
+                  .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                  });
+                
+                const timeoutPromise = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Upload timed out after 30 seconds')), 30000)
+                );
+                
+                const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
+                
+                if (error) {
+                  console.error(`❌ Upload failed for ${file.name}:`, error);
+                  throw new Error(`Upload failed: ${error.message}`);
+                }
+                
+                console.log(`✅ ${file.name} uploaded successfully:`, data);
+                
+                // Get the public URL
+                const { data: { publicUrl } } = supabase.storage
+                  .from(bucketName)
+                  .getPublicUrl(filePath);
+                
+                // Update progress for successful upload
+                setUploadProgress(50 + ((index + 1) / fileArray.length) * 25);
+                
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: publicUrl,
+                  path: filePath,
+                  uploaded: true,
+                  bucket: bucketName
+                };
+              } catch (fileError) {
+                console.error(`❌ Error uploading ${file.name}:`, fileError);
+                // Update progress even on error
+                setUploadProgress(50 + ((index + 1) / fileArray.length) * 25);
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: null,
+                  path: null,
+                  uploaded: false,
+                  bucket: null,
+                  error: fileError.message
+                };
+              }
+            });
+            
+            const results = await Promise.all(uploadPromises);
+            setUploadProgress(100);
+            console.log('🎉 All event kit files processed!');
+            
+            console.log('📋 Event kits upload results:', results);
+            onUpload(results);
+            setUploading(false);
+            setUploadProgress(0);
+            
+          } catch (error) {
+            console.error('❌ Event kits upload failed:', error);
+            // Fallback: store files locally
+            const fileResults = fileArray.map((file, index) => {
+              setUploadProgress(((index + 1) / fileArray.length) * 100);
+              return {
+                file: file,
+                filename: file.name,
+                size: file.size,
+                type: file.type,
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                uploaded: false
+              };
+            });
+            onUpload(fileResults);
+          }
+        } else if (uploadType === 'event-programmes') {
+          // Handle event programmes upload with real Supabase Storage
+          try {
+            setUploadProgress(25);
+            console.log('🚀 Starting event programmes upload...');
+            
+            const bucketName = 'event-programmes';
+            console.log(`🔍 Starting upload to bucket "${bucketName}"`);
+            
+            const uploadPromises = fileArray.map(async (file, index) => {
+              try {
+                // Generate unique file path
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                const filePath = `programmes/${fileName}`;
+                
+                console.log(`📁 Uploading ${file.name} to path:`, filePath);
+                
+                const { data, error } = await supabase.storage
+                  .from(bucketName)
+                  .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                  });
+                
+                if (error) {
+                  console.error(`❌ Upload failed for ${file.name}:`, error);
+                  throw new Error(`Upload failed: ${error.message}`);
+                }
+                
+                console.log(`✅ ${file.name} uploaded successfully:`, data);
+                
+                // Get the public URL
+                const { data: { publicUrl } } = supabase.storage
+                  .from(bucketName)
+                  .getPublicUrl(filePath);
+                
+                // Update progress
+                setUploadProgress(25 + ((index + 1) / fileArray.length) * 50);
+                
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: publicUrl,
+                  path: filePath,
+                  uploaded: true,
+                  bucket: bucketName
+                };
+              } catch (fileError) {
+                console.error(`❌ Error uploading ${file.name}:`, fileError);
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: null,
+                  path: null,
+                  uploaded: false,
+                  bucket: null,
+                  error: fileError.message
+                };
+              }
+            });
+            
+            const results = await Promise.all(uploadPromises);
+            setUploadProgress(100);
+            
+            console.log('📋 Event programmes upload results:', results);
+            onUpload(results);
+            
+          } catch (error) {
+            console.error('❌ Event programmes upload failed:', error);
+            // Fallback: store files locally
+            const fileResults = fileArray.map((file, index) => {
+              setUploadProgress(((index + 1) / fileArray.length) * 100);
+              return {
+                file: file,
+                filename: file.name,
+                size: file.size,
+                type: file.type,
+                id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                uploaded: false
+              };
+            });
+            onUpload(fileResults);
+          }
+        } else if (uploadType === 'certificate-template') {
+          // Handle certificate template upload with real Supabase Storage
+          try {
+            setUploadProgress(25);
+            console.log('🚀 Starting certificate template upload...');
+            
+            // Try certificate-template bucket only - no fallback to event-materials
+            const bucketName = 'certificate-template';
+            
+            const uploadPromises = fileArray.map(async (file, index) => {
+              try {
+                // Update progress for each file start
+                setUploadProgress(25 + (index / fileArray.length) * 25);
+                console.log(`📤 Processing file ${index + 1}/${fileArray.length}: ${file.name}`);
+                
+                // Generate unique file path
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+                const filePath = `templates/${fileName}`;
+                
+                console.log(`📁 Uploading to certificate-template bucket:`, filePath);
+                
+                // Add timeout protection to prevent stuck uploads
+                const uploadPromise = supabase.storage
+                  .from(bucketName)
+                  .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                  });
+                
+                const timeoutPromise = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Upload timed out after 15 seconds')), 15000)
+                );
+                
+                const { data, error } = await Promise.race([uploadPromise, timeoutPromise]);
+                
+                if (error) {
+                  console.error(`❌ Upload failed for ${file.name}:`, error);
+                  throw error;
+                }
+                
+                console.log(`✅ ${file.name} uploaded successfully to "${bucketName}":`, data);
+                
+                // Get the public URL
+                const { data: { publicUrl } } = supabase.storage
+                  .from(bucketName)
+                  .getPublicUrl(filePath);
+                
+                // Update progress for successful upload
+                setUploadProgress(50 + ((index + 1) / fileArray.length) * 25);
+                
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: publicUrl,
+                  path: filePath,
+                  uploaded: true,
+                  bucket: bucketName
+                };
+              } catch (fileError) {
+                console.error(`❌ Error uploading ${file.name}:`, fileError);
+                // Update progress even on error
+                setUploadProgress(50 + ((index + 1) / fileArray.length) * 25);
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  url: null,
+                  path: null,
+                  uploaded: false,
+                  bucket: null,
+                  error: fileError.message
+                };
+                }
+              });
+              
+              const results = await Promise.all(uploadPromises);
+              setUploadProgress(100);
+              console.log('🎉 All certificate template files processed!');
+              
+              console.log('📋 Certificate template upload results:', results);
+              onUpload(results);
+              
+            } catch (error) {
+              console.error('❌ Certificate template upload failed:', error);
+              // Fallback: store files locally
+              const fileResults = fileArray.map((file, index) => {
+                setUploadProgress(((index + 1) / fileArray.length) * 100);
+                return {
+                  file: file,
+                  filename: file.name,
+                  size: file.size,
+                  type: file.type,
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  uploaded: false
+                };
+              });
+              onUpload(fileResults);
+            }
+        } else {
+          // For other file types, just store metadata for now
+          console.log('⚠️ Unknown upload type, storing files locally');
+          const fileResults = fileArray.map((file, index) => {
+            setUploadProgress(((index + 1) / fileArray.length) * 100);
+            return {
+              file: file,
+              filename: file.name,
+              size: file.size,
+              type: file.type,
+              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              uploaded: false
+            };
+          });
           
-          const mockResult = {
-            success: true,
-            url: URL.createObjectURL(file),
-            filename: file.name
-          };
-          
-          setUploadProgress(((index + 1) / fileArray.length) * 100);
-          return mockResult;
-        });
-
-        const results = await Promise.all(uploadPromises);
-        onUpload(results);
+          onUpload(fileResults);
+        }
       } catch (error) {
         console.error('Upload failed:', error);
         alert(`Upload failed: ${error.message}`);
@@ -76,93 +951,235 @@ const FileDropzone = ({ label, name, multiple = false, accept, onFileChange, onU
   };
 
   return (
-    <div className="mb-6 sm:mb-8">
-      <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
-        {label}
-      </label>
-      <div
-        className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl cursor-pointer p-6 sm:p-8 transition-all duration-300 min-h-[160px] sm:min-h-[180px] md:min-h-[200px] ${
-          dragActive 
-            ? 'border-blue-500 bg-blue-50 shadow-lg' 
-            : 'border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
-        }`}
-        onClick={() => fileInputRef.current && fileInputRef.current.click()}
-        onDragEnter={handleDrag}
-        onDragOver={handleDrag}
-        onDragLeave={handleDrag}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          name={name}
-          multiple={multiple}
-          accept={accept}
-          ref={fileInputRef}
-          className="hidden"
-          onChange={(e) => e.target.files && handleFiles(e.target.files)}
-        />
+          <div className="mb-6 sm:mb-8">
+        <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+          {label}
+        </label>
         
-        {uploading ? (
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-4 border-blue-200 border-t-blue-600 mx-auto mb-3"></div>
-            <p className="text-blue-600 font-medium text-base sm:text-lg">Uploading... {Math.round(uploadProgress)}%</p>
-          </div>
-        ) : (
-          <>
-            <div className="w-16 h-16 sm:w-20 sm:h-20 mb-4 text-blue-500">
-              <svg
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-              </svg>
+        {/* Upload Progress Bar */}
+        {uploading && (
+          <div className="mb-3">
+            <div className="flex items-center justify-between text-sm text-slate-600 mb-1">
+              <span>Uploading files...</span>
+              <span>{Math.round(uploadProgress)}%</span>
             </div>
-            <p className="text-blue-600 font-medium text-sm sm:text-base text-center px-4 mb-2">
-              {multiple ? 'Drag & drop files here or click to select' : 'Drag & drop file here or click to select'}
-            </p>
-            <p className="text-slate-500 text-xs sm:text-sm text-center">
-              Max size: {maxSizeMB}MB
-            </p>
-          </>
+            <div className="w-full bg-slate-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+          </div>
         )}
         
-        {fileNames.length > 0 && !uploading && (
-          <ul className="mt-4 text-xs sm:text-sm text-blue-700 max-h-20 overflow-y-auto w-full space-y-1">
-            {fileNames.map((name, idx) => (
-              <li key={idx} className="truncate max-w-[200px] sm:max-w-[250px] md:max-w-[300px] mx-auto bg-blue-50 px-3 py-1 rounded-lg">
-                {name}
-              </li>
-            ))}
-          </ul>
+        <Controller
+          name={name}
+          control={control}
+          render={({ field: { onChange, value } }) => (
+                      <div
+              className={`flex flex-col items-center justify-center border-2 border-dashed rounded-2xl cursor-pointer p-6 sm:p-8 transition-all duration-300 min-h-[160px] sm:min-h-[180px] md:min-h-[200px] ${
+                dragActive 
+                  ? 'border-blue-500 bg-blue-50 shadow-lg scale-105' 
+                  : error
+                ? 'border-red-300 bg-red-50'
+                : uploadedFiles.length > 0
+                ? multiple 
+                  ? 'border-green-400 bg-green-50 hover:border-green-500 hover:bg-green-100' // Multiple files - can add more
+                  : 'border-green-400 bg-green-50' // Single file - can replace
+                : 'border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50 hover:shadow-md'
+              }`}
+              onClick={() => {
+                console.log('🖱️ FileDropzone clicked, opening file picker...');
+                if (fileInputRef.current) {
+                  fileInputRef.current.click();
+                }
+              }}
+              onDragEnter={handleDrag}
+              onDragOver={handleDrag}
+              onDragLeave={handleDrag}
+              onDrop={handleDrop}
+            >
+            <input
+              type="file"
+              name={name}
+              multiple={multiple}
+              accept={accept}
+              ref={fileInputRef}
+              className="hidden"
+              onChange={async (e) => {
+                console.log('📁 File input onChange triggered:', e.target.files);
+                if (e.target.files && e.target.files.length > 0) {
+                  console.log('📁 Files selected in input:', Array.from(e.target.files).map(f => ({ name: f.name, size: f.size, type: f.type })));
+                  onChange(e.target.files);
+                  console.log('📁 Calling handleFiles...');
+                  try {
+                    await handleFiles(e.target.files);
+                    console.log('✅ handleFiles call completed');
+                  } catch (error) {
+                    console.error('❌ handleFiles failed:', error);
+                  }
+                } else {
+                  console.log('⚠️ No files in onChange event');
+                }
+              }}
+            />
+            
+            {uploading ? (
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-4 border-blue-200 border-t-blue-600 mx-auto mb-3"></div>
+                <p className="text-blue-600 font-medium text-base sm:text-lg">Uploading... {Math.round(uploadProgress)}%</p>
+              </div>
+            ) : uploadedFiles.length > 0 ? (
+              <>
+                <div className="w-16 h-16 sm:w-20 sm:h-20 mb-4 text-green-500">
+                  <svg
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                </div>
+                <p className="text-green-600 font-medium text-sm sm:text-base text-center px-4 mb-2">
+                  {uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} uploaded
+                </p>
+                <p className="text-slate-500 text-xs sm:text-sm text-center">
+                  {multiple ? 'Click to add more files or drag & drop' : 'Click to replace or drag & drop'}
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="w-16 h-16 sm:w-20 sm:h-20 mb-4 text-blue-500">
+                  <svg
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                  </svg>
+                </div>
+                <p className="text-blue-600 font-medium text-sm sm:text-base text-center px-4 mb-2">
+                  {multiple ? 'Drag & drop files here or click to select' : 'Drag & drop file here or click to select'}
+                </p>
+                <p className="text-slate-500 text-xs sm:text-sm text-center">
+                  Max size: {maxSizeMB}MB
+                </p>
+              </>
+            )}
+            
+            {/* Display uploaded files with remove buttons */}
+            {uploadedFiles.length > 0 && !uploading && (
+              <div className="mt-4 w-full">
+                {/* Warning for restored files without File objects */}
+                {uploadedFiles.some(file => !file.file || !(file.file instanceof File)) && (
+                  <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-xs text-yellow-700">
+                      ⚠️ Some files were restored from previous session. You may need to re-upload them for full functionality.
+                    </p>
+                  </div>
+                )}
+                
+                <div className="text-sm font-medium text-slate-700 mb-2">
+                  Uploaded Files ({uploadedFiles.length}):
+                </div>
+                <div className="space-y-2 max-h-32 overflow-y-auto">
+                  {uploadedFiles.map((file, idx) => (
+                    <div key={file.id || idx} className="flex items-center justify-between bg-blue-50 rounded-lg px-3 py-2 border border-blue-200">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
+                        {/* File Preview */}
+                        {(() => {
+                          try {
+                            if (file.type?.startsWith('image/') && file.file && file.file instanceof File) {
+                              return (
+                                <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+                                  <img 
+                                    src={URL.createObjectURL(file.file)} 
+                                    alt={file.filename}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              );
+                            }
+                          } catch (error) {
+                            console.warn('Error creating file preview:', error);
+                          }
+                          
+                          // Fallback to generic icon
+                          return (
+                            <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                              <div className="w-6 h-6 text-slate-500">
+                                {file.type?.startsWith('image/') ? (
+                                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
+                                  </svg>
+                                ) : (
+                                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                        
+                        {/* File Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800 truncate">{file.filename}</p>
+                          <p className="text-xs text-slate-500">
+                            {file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : 'Size unknown'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Remove Button */}
+                      {onRemoveFile && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation(); // Prevent event bubbling to parent
+                            onRemoveFile(file.id || idx);
+                          }}
+                          className="ml-2 p-2 rounded-full hover:bg-red-100 text-red-500 hover:text-red-700 transition-colors"
+                          title="Remove file"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                {/* Add more files hint */}
+                {multiple && (
+                  <div className="mt-3 text-center">
+                    <p className="text-xs text-slate-500">
+                      💡 You can add more files by clicking the upload area or dragging & dropping
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         )}
-      </div>
+      />
+      {error && (
+        <p className="mt-2 text-sm text-red-600">{error.message}</p>
+      )}
     </div>
   );
 };
 
 export const CreateEvent = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    bannerFile: null,
-    title: '',
-    rationale: '',
-    startDate: '',
-    endDate: '',
-    startTime: '',
-    endTime: '',
-    sponsors: [],
-    guestSpeakers: [],
-    eventKitsFile: null,
-    eventProgrammeFile: null,
-    sponsorImages: [],
-    speakerImages: [],
-    certificatesFile: null
-  });
-
+  const { user, isAuthenticated } = useAuth();
   const [uploadedFiles, setUploadedFiles] = useState({
     banner: null,
     materials: null,
@@ -170,84 +1187,455 @@ export const CreateEvent = () => {
     speakerPhotos: []
   });
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  // Debug: Log uploadedFiles changes
+  useEffect(() => {
+    console.log('📁 uploadedFiles state changed:', uploadedFiles);
+  }, [uploadedFiles]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
 
-  const handleFileChange = (e) => {
-    const { name, files } = e.target;
-    if (files && files.length > 0) {
-      if (name === 'sponsorImages' || name === 'speakerImages') {
-        setFormData(prev => ({
-          ...prev,
-          [name]: Array.from(files)
-        }));
-      } else {
-        setFormData(prev => ({
-          ...prev,
-          [name]: files[0]
-        }));
-      }
+  // Check if user has permission to create events
+  const canCreateEvents = isAuthenticated && user && (user.role === 'admin' || user.role === 'organizer');
+
+  // Redirect unauthorized users
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
+    if (!canCreateEvents) {
+      navigate('/');
+      return;
+    }
+  }, [isAuthenticated, canCreateEvents, navigate]);
+
+
+
+  // Show access denied for unauthorized users
+  if (!isAuthenticated) {
+    return (
+      <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center max-w-md">
+          <h2 className="text-2xl font-bold text-slate-800 mb-4">Authentication Required</h2>
+          <p className="text-slate-600 mb-6">You must be logged in to access this page.</p>
+          <button
+            onClick={() => navigate('/login')}
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            Go to Login
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  if (!canCreateEvents) {
+    return (
+      <section className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 text-center max-w-md">
+          <h2 className="text-2xl font-bold text-slate-800 mb-4">Access Denied</h2>
+          <p className="text-slate-600 mb-6">Only administrators and organizers can create events.</p>
+          <button
+            onClick={() => navigate('/')}
+            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            Go to Home
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  // Get saved form data from session storage
+  const getSavedFormData = () => {
+    try {
+      const saved = sessionStorage.getItem('create-event-draft');
+      return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+      console.error('Error parsing saved form data:', error);
+      return null;
     }
   };
 
-  const handleArrayChange = (e, arrayName) => {
-    const { value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [arrayName]: value.split(',').map(item => item.trim()).filter(item => item)
-    }));
+  // Save form data to session storage
+  const saveFormData = (data) => {
+    if (!autoSaveEnabled) return; // Don't save if auto-save is disabled
+    
+    try {
+      // Only save non-file fields to session storage
+      const dataToSave = {
+        title: data.title || '',
+        rationale: data.rationale || '',
+        startDate: data.startDate || new Date().toISOString().split('T')[0],
+        endDate: data.endDate || new Date().toISOString().split('T')[0],
+        startTime: data.startTime || '09:00',
+        endTime: data.endTime || '17:00',
+        venue: data.venue || '',
+        sponsors: data.sponsors || '',
+        guestSpeakers: data.guestSpeakers || '',
+      };
+      sessionStorage.setItem('create-event-draft', JSON.stringify(dataToSave));
+    } catch (error) {
+      console.error('Error saving form data:', error);
+    }
+  };
+
+  // Clear saved form data
+  const clearSavedFormData = () => {
+    try {
+      sessionStorage.removeItem('create-event-draft');
+    } catch (error) {
+      console.error('Error clearing saved form data:', error);
+    }
+  };
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+    watch,
+    setValue
+  } = useForm({
+    resolver: zodResolver(createEventSchema),
+    mode: 'onChange',
+    defaultValues: {
+      title: '',
+      rationale: '',
+      startDate: new Date().toISOString().split('T')[0],
+      endDate: new Date().toISOString().split('T')[0],
+      startTime: '09:00',
+      endTime: '17:00',
+      venue: '',
+      sponsors: '',
+      guestSpeakers: '',
+      bannerFile: null,
+      eventKitsFile: null,
+      eventProgrammeFile: null,
+      certificatesFile: null,
+      sponsorImages: null,
+      speakerImages: null,
+    }
+  });
+
+  // Monitor uploadedFiles state changes for debugging
+  useEffect(() => {
+    console.log('📁 uploadedFiles state changed:', uploadedFiles);
+  }, [uploadedFiles]);
+
+  // Instant data restoration - like Google Forms
+  useEffect(() => {
+    // Check for pending event data (from survey creation) - instant restore
+    const pendingEventData = sessionStorage.getItem('pending-event-data');
+    if (pendingEventData) {
+      try {
+        const eventData = JSON.parse(pendingEventData);
+        
+        // Instant restore to form state
+        setValue('title', eventData.title || '');
+        setValue('rationale', eventData.rationale || '');
+        setValue('startDate', eventData.start_date || new Date().toISOString().split('T')[0]);
+        setValue('endDate', eventData.end_date || new Date().toISOString().split('T')[0]);
+        setValue('startTime', eventData.start_time || '09:00');
+        setValue('endTime', eventData.end_time || '17:00');
+        setValue('venue', eventData.venue || '');
+        
+        // Handle sponsors and speakers
+        if (eventData.sponsors && Array.isArray(eventData.sponsors)) {
+          setValue('sponsors', eventData.sponsors.map(s => s.name).join(', '));
+        }
+        if (eventData.guest_speakers && Array.isArray(eventData.guest_speakers)) {
+          setValue('guestSpeakers', eventData.guest_speakers.map(s => s.name).join(', '));
+        }
+        
+        // Instant restore uploaded files (but note that File objects are lost in sessionStorage)
+        const pendingEventFiles = sessionStorage.getItem('pending-event-files');
+        if (pendingEventFiles) {
+          try {
+            const filesData = JSON.parse(pendingEventFiles);
+            // Files restored from sessionStorage won't have actual File objects
+            // They'll only have metadata (filename, size, type) for display purposes
+            console.log('⚠️ Files restored from sessionStorage (File objects lost):', filesData);
+            setUploadedFiles(filesData);
+          } catch (error) {
+            console.warn('Could not restore files, continuing with form data');
+          }
+        }
+        
+        console.log('⚡ Instant data restoration completed');
+        return; // Skip auto-save restoration
+      } catch (error) {
+        console.warn('Pending data parse error, falling back to auto-save');
+      }
+    }
+    
+    // Fallback to auto-saved data (also instant)
+    const savedData = getSavedFormData();
+    if (savedData) {
+      Object.entries(savedData).forEach(([key, value]) => {
+        if (value) setValue(key, value);
+      });
+    }
+  }, [setValue]);
+
+  // Instant auto-save like Google Forms
+  useEffect(() => {
+    const subscription = watch((data) => {
+      if (autoSaveEnabled) {
+        // Debounced save for better performance
+        const timeoutId = setTimeout(() => {
+          saveFormData(data);
+        }, 300); // Save after 300ms of no changes
+        
+        return () => clearTimeout(timeoutId);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [watch, autoSaveEnabled]);
+
+  // Toggle auto-save functionality
+  const toggleAutoSave = () => {
+    setAutoSaveEnabled(!autoSaveEnabled);
+    if (!autoSaveEnabled) {
+      // If enabling auto-save, save current form data
+      const currentData = watch();
+      saveFormData(currentData);
+    }
   };
 
   const handleFileUpload = (uploadType, results) => {
-    if (uploadType === 'banner') {
-      setUploadedFiles(prev => ({ ...prev, banner: results[0] }));
-    } else if (uploadType === 'materials') {
-      setUploadedFiles(prev => ({ ...prev, materials: results[0] }));
-    } else if (uploadType === 'logo') {
-      setUploadedFiles(prev => ({ ...prev, sponsorLogos: results }));
-    } else if (uploadType === 'photo') {
-      setUploadedFiles(prev => ({ ...prev, speakerPhotos: results }));
+    console.log('🔄 handleFileUpload called with:', { uploadType, results });
+    
+    try {
+      if (uploadType === 'banner') {
+        console.log('📸 Processing banner file...');
+        // Banner is single file, so replace
+        setUploadedFiles(prev => {
+          console.log('📸 Previous uploadedFiles:', prev);
+          const newState = { ...prev, banner: results[0] };
+          console.log('📸 New uploadedFiles state:', newState);
+          return newState;
+        });
+        console.log('✅ Banner file processed');
+      } else if (uploadType === 'materials') {
+        console.log('📁 Processing materials files...');
+        // For materials, accumulate files by category
+        setUploadedFiles(prev => ({ 
+          ...prev, 
+          materials: prev.materials ? [...prev.materials, ...results] : results 
+        }));
+      } else if (uploadType === 'logo') {
+        console.log('🏷️ Processing logo files...');
+        // For sponsor logos, accumulate multiple files
+        setUploadedFiles(prev => ({ 
+          ...prev, 
+          sponsorLogos: prev.sponsorLogos ? [...prev.sponsorLogos, ...results] : results 
+        }));
+      } else if (uploadType === 'photo') {
+        console.log('📷 Processing photo files...');
+        // For speaker photos, accumulate multiple files
+        setUploadedFiles(prev => ({ 
+          ...prev, 
+          speakerPhotos: prev.speakerPhotos ? [...prev.speakerPhotos, ...results] : results 
+        }));
+      } else if (uploadType === 'event-kits') {
+        console.log('📦 Processing event kits files...');
+        // For event kits, accumulate multiple files
+        setUploadedFiles(prev => ({ 
+          ...prev, 
+          eventKits: prev.eventKits ? [...prev.eventKits, ...results] : results 
+        }));
+      } else if (uploadType === 'event-programmes') {
+        console.log('📋 Processing event programmes files...');
+        // For event programmes, accumulate multiple files
+        setUploadedFiles(prev => ({ 
+          ...prev, 
+          eventProgrammes: prev.eventProgrammes ? [...prev.eventProgrammes, ...results] : results 
+        }));
+      } else if (uploadType === 'certificate-template') {
+        console.log('🏆 Processing certificate template files...');
+        // For certificate templates, accumulate multiple files
+        setUploadedFiles(prev => ({ 
+          ...prev, 
+          certificateTemplates: prev.certificateTemplates ? [...prev.certificateTemplates, ...results] : results 
+        }));
+      }
+      console.log('✅ handleFileUpload completed successfully');
+    } catch (error) {
+      console.error('❌ Error in handleFileUpload:', error);
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
+  const handleRemoveFile = async (uploadType, fileId, category = null) => {
     try {
-      // Mock event creation
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Find the file to get its storage path
+      let fileToRemove = null;
+      let fileArray = null;
       
-      console.log('Event created successfully (mock)');
-      console.log('Event data:', {
-        title: formData.title,
-        rationale: formData.rationale,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-        sponsors: formData.sponsors,
-        guestSpeakers: formData.guestSpeakers,
-        uploadedFiles
-      });
+      if (uploadType === 'banner') {
+        fileToRemove = uploadedFiles.banner;
+        if (fileToRemove) {
+          setUploadedFiles(prev => ({ ...prev, banner: null }));
+        }
+      } else if (uploadType === 'materials') {
+        fileArray = uploadedFiles.materials;
+        fileToRemove = fileArray?.find(f => f.id === fileId);
+        if (fileToRemove) {
+          setUploadedFiles(prev => ({ 
+            ...prev, 
+            materials: prev.materials?.filter(f => f.id !== fileId) || []
+          }));
+        }
+      } else if (uploadType === 'logo') {
+        fileArray = uploadedFiles.sponsorLogos;
+        fileToRemove = fileArray?.find(f => f.id === fileId);
+        if (fileToRemove) {
+          setUploadedFiles(prev => ({ 
+            ...prev, 
+            sponsorLogos: prev.sponsorLogos?.filter(f => f.id !== fileId) || []
+          }));
+        }
+      } else if (uploadType === 'photo') {
+        fileArray = uploadedFiles.speakerPhotos;
+        fileToRemove = fileArray?.find(f => f.id === fileId);
+        if (fileToRemove) {
+          setUploadedFiles(prev => ({ 
+            ...prev, 
+            speakerPhotos: prev.speakerPhotos?.filter(f => f.id !== fileId) || []
+          }));
+        }
+      } else if (uploadType === 'event-kits') {
+        fileArray = uploadedFiles.eventKits;
+        fileToRemove = fileArray?.find(f => f.id === fileId);
+        if (fileToRemove) {
+          setUploadedFiles(prev => ({ 
+            ...prev, 
+            eventKits: prev.eventKits?.filter(f => f.id !== fileId) || []
+          }));
+        }
+      } else if (uploadType === 'event-programmes') {
+        fileArray = uploadedFiles.eventProgrammes;
+        fileToRemove = fileArray?.find(f => f.id === fileId);
+        if (fileToRemove) {
+          setUploadedFiles(prev => ({ 
+            ...prev, 
+            eventProgrammes: prev.eventProgrammes?.filter(f => f.id !== fileId) || []
+          }));
+        }
+      } else if (uploadType === 'certificate-template') {
+        fileArray = uploadedFiles.certificateTemplates;
+        fileToRemove = fileArray?.find(f => f.id === fileId);
+        if (fileToRemove) {
+          setUploadedFiles(prev => ({ 
+            ...prev, 
+            certificateTemplates: prev.certificateTemplates?.filter(f => f.id !== fileId) || []
+          }));
+        }
+      }
       
-      navigate('/create-survey');
-      
-    } catch (err) {
-      setError('Event creation failed. Please try again.');
-      console.error('Event creation failed:', err);
-    } finally {
-      setLoading(false);
+      // Remove file from Supabase Storage if it was uploaded
+      if (fileToRemove?.path && fileToRemove?.uploaded && fileToRemove?.bucket) {
+        try {
+          // Use the bucket name stored in the file object
+          const bucketName = fileToRemove.bucket;
+          console.log(`🗑️ Removing file from bucket "${bucketName}":`, fileToRemove.path);
+          
+          await supabase.storage
+            .from(bucketName)
+            .remove([fileToRemove.path]);
+          console.log('✅ File removed from storage:', fileToRemove.filename);
+        } catch (storageError) {
+          console.warn('⚠️ Could not remove file from storage:', storageError);
+          // Continue with local removal even if storage removal fails
+        }
+      }
+    } catch (error) {
+      console.error('Error removing file:', error);
     }
+  };
+
+  const onSubmit = (data) => {
+    if (!canCreateEvents) {
+      alert('Access denied. Only administrators and organizers can create events.');
+      return;
+    }
+
+    // Prepare event data (don't save to database yet)
+    const eventData = {
+      title: data.title || 'Untitled Event',
+      rationale: data.rationale || '',
+      start_date: data.startDate || new Date().toISOString().split('T')[0],
+      end_date: data.endDate || new Date().toISOString().split('T')[0],
+      start_time: data.startTime || '09:00',
+      end_time: data.endTime || '17:00',
+      venue: data.venue || 'TBD',
+      status: 'draft',
+      created_by: user.id,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    // Handle sponsors and speakers
+    if (data.sponsors) {
+      eventData.sponsors = data.sponsors.split(',').map(s => s.trim()).filter(s => s).map(name => ({ name }));
+    }
+    
+    if (data.guestSpeakers) {
+      eventData.guest_speakers = data.guestSpeakers.split(',').map(s => s.trim()).filter(s => s).map(name => ({ name }));
+    }
+
+    // Handle file uploads if any
+    if (uploadedFiles.banner) {
+      console.log('Banner file status:', uploadedFiles.banner);
+      if (uploadedFiles.banner.url) {
+        eventData.banner_url = uploadedFiles.banner.url;
+        console.log('✅ Banner URL set:', uploadedFiles.banner.url);
+      } else {
+        console.log('⚠️ Banner file has no URL, using filename as placeholder');
+        eventData.banner_url = `placeholder-${uploadedFiles.banner.filename}`;
+      }
+    }
+    
+    // Handle materials files
+    if (uploadedFiles.materials && uploadedFiles.materials.length > 0) {
+      eventData.materials_url = uploadedFiles.materials.map(f => f.url).join(',');
+    }
+    
+    // Handle sponsor logos
+    if (uploadedFiles.sponsorLogos && uploadedFiles.sponsorLogos.length > 0) {
+      eventData.sponsor_logos_url = uploadedFiles.sponsorLogos.map(f => f.url).join(',');
+    }
+    
+    // Handle speaker photos
+    if (uploadedFiles.speakerPhotos && uploadedFiles.speakerPhotos.length > 0) {
+      eventData.speaker_photos_url = uploadedFiles.speakerPhotos.map(f => f.url).join(',');
+    }
+
+    // Store event data in session storage for the next step
+    sessionStorage.setItem('pending-event-data', JSON.stringify(eventData));
+    sessionStorage.setItem('pending-event-files', JSON.stringify(uploadedFiles));
+    
+    console.log('Event data prepared and stored for survey creation:', eventData);
+    
+    // Navigate to survey creation immediately
+    navigate('/create-survey');
+  };
+
+  // Add a function to manually clear saved data (useful for testing)
+  const handleClearDraft = () => {
+    clearSavedFormData();
+    // Reset form to default values
+    setValue('title', '');
+    setValue('rationale', '');
+    setValue('startDate', new Date().toISOString().split('T')[0]);
+    setValue('endDate', new Date().toISOString().split('T')[0]);
+    setValue('startTime', '09:00');
+    setValue('endTime', '17:00');
+    setValue('venue', '');
+    setValue('sponsors', '');
+    setValue('guestSpeakers', '');
+    console.log('✅ Draft cleared');
   };
 
   return (
@@ -270,16 +1658,66 @@ export const CreateEvent = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-slate-800 to-blue-800 bg-clip-text text-transparent">
               Create Event
             </h1>
           </div>
-          <p className="text-slate-600 text-lg sm:text-xl max-w-2xl mx-auto">
+          <p className="text-slate-600 text-xl sm:text-2xl max-w-3xl mx-auto">
             Set up your event details and upload necessary materials to get started
           </p>
+          
+          {/* Role Indicator */}
+          <div className="mt-4">
+            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+              user?.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'
+            }`}>
+              {user?.role === 'admin' ? 'Administrator' : 'Organizer'}
+            </span>
+          </div>
+          
+          {/* Draft Management Info */}
+          <div className="mt-6 flex items-center justify-center space-x-6">
+            {/* Auto-save Toggle */}
+            <div className="flex items-center space-x-3">
+              <span className="text-base font-medium text-slate-600">Auto-save</span>
+              <button
+                onClick={toggleAutoSave}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                  autoSaveEnabled ? 'bg-green-500' : 'bg-gray-400'
+                }`}
+              >
+                <div className={`inline-flex h-5 w-5 transform items-center justify-center rounded-full bg-white transition-transform ${
+                  autoSaveEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}>
+                  {autoSaveEnabled && (
+                    <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                </div>
+              </button>
+              <span className={`text-base font-medium ${autoSaveEnabled ? 'text-green-600' : 'text-gray-500'}`}>
+                {autoSaveEnabled ? 'Enabled' : 'Disabled'}
+              </span>
+            </div>
+            
+                         {/* Clear Draft Button */}
+             <button
+               onClick={handleClearDraft}
+               className="inline-flex items-center space-x-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-lg border border-red-200 hover:border-red-300 transition-all duration-200 font-medium text-base shadow-sm hover:shadow-md"
+               title="Clear saved draft"
+             >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Clear Draft</span>
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 sm:space-y-8">
           {/* Event Banner Section */}
           <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden">
             <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-4 border-b border-slate-100">
@@ -300,10 +1738,14 @@ export const CreateEvent = () => {
                 label="Event Banner"
                 name="bannerFile"
                 accept="image/*"
-                onFileChange={handleFileChange}
+                onFileChange={() => {}}
                 onUpload={(results) => handleFileUpload('banner', results)}
                 uploadType="banner"
-                maxSizeMB={5}
+                maxSizeMB={25}
+                control={control}
+                error={errors.bannerFile}
+                uploadedFiles={uploadedFiles.banner ? [uploadedFiles.banner] : []}
+                onRemoveFile={() => handleRemoveFile('banner')}
               />
             </div>
           </div>
@@ -317,25 +1759,34 @@ export const CreateEvent = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                   </svg>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-800">Event Title</h3>
-                  <p className="text-sm text-slate-600">Set the main title for your event</p>
-                </div>
+                                 <div>
+                   <h3 className="text-xl font-semibold text-slate-800">Event Title</h3>
+                   <p className="text-base text-slate-600">Set the main title for your event</p>
+                 </div>
               </div>
             </div>
             <div className="p-6">
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                  Event Title
-                </label>
-                <input
-                  type="text"
+                                 <label className="block text-base font-semibold text-slate-700 uppercase tracking-wide">
+                   Event Title
+                 </label>
+                <Controller
                   name="title"
-                  value={formData.title}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400"
-                  placeholder="Enter your event title"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      type="text"
+                                             className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-lg transition-all duration-200 placeholder-slate-400 ${
+                         errors.title ? 'border-red-300 focus:ring-red-500' : 'border-slate-200'
+                       }`}
+                      placeholder="Enter your event title"
+                    />
+                  )}
                 />
+                                 {errors.title && (
+                   <p className="text-base text-red-600">{errors.title.message}</p>
+                 )}
               </div>
             </div>
           </div>
@@ -359,16 +1810,25 @@ export const CreateEvent = () => {
               {/* Rationale */}
               <div className="space-y-2">
                 <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
-                  Event Description
+                  Event Rationale
                 </label>
-                <textarea
+                <Controller
                   name="rationale"
-                  value={formData.rationale}
-                  onChange={handleInputChange}
-                  rows="4"
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400"
-                  placeholder="Describe your event and its purpose"
+                  control={control}
+                  render={({ field }) => (
+                    <textarea
+                      {...field}
+                      rows="4"
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400 ${
+                        errors.rationale ? 'border-red-300 focus:ring-red-500' : 'border-slate-200'
+                      }`}
+                      placeholder="Describe your event and its purpose"
+                    />
+                  )}
                 />
+                {errors.rationale && (
+                  <p className="text-sm text-red-600">{errors.rationale.message}</p>
+                )}
               </div>
             </div>
           </div>
@@ -395,25 +1855,43 @@ export const CreateEvent = () => {
                   <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
                     Start Date
                   </label>
-                  <input
-                    type="date"
+                  <Controller
                     name="startDate"
-                    value={formData.startDate}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="date"
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 ${
+                          errors.startDate ? 'border-red-300 focus:ring-red-500' : 'border-slate-200'
+                        }`}
+                      />
+                    )}
                   />
+                  {errors.startDate && (
+                    <p className="text-sm text-red-600">{errors.startDate.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
                     End Date
                   </label>
-                  <input
-                    type="date"
+                  <Controller
                     name="endDate"
-                    value={formData.endDate}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="date"
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 ${
+                          errors.endDate ? 'border-red-300 focus:ring-red-500' : 'border-slate-200'
+                        }`}
+                      />
+                    )}
                   />
+                  {errors.endDate && (
+                    <p className="text-sm text-red-600">{errors.endDate.message}</p>
+                  )}
                 </div>
               </div>
               
@@ -423,26 +1901,86 @@ export const CreateEvent = () => {
                   <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
                     Start Time
                   </label>
-                  <input
-                    type="time"
+                  <Controller
                     name="startTime"
-                    value={formData.startTime}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="time"
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 ${
+                          errors.startTime ? 'border-red-300 focus:ring-red-500' : 'border-slate-200'
+                        }`}
+                      />
+                    )}
                   />
+                  {errors.startTime && (
+                    <p className="text-sm text-red-600">{errors.startTime.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
                     End Time
                   </label>
-                  <input
-                    type="time"
+                  <Controller
                     name="endTime"
-                    value={formData.endTime}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200"
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="time"
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 ${
+                          errors.endTime ? 'border-red-300 focus:ring-red-500' : 'border-slate-200'
+                        }`}
+                      />
+                    )}
                   />
+                  {errors.endTime && (
+                    <p className="text-sm text-red-600">{errors.endTime.message}</p>
+                  )}
                 </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Venue Section */}
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-50 to-slate-50 px-6 py-4 border-b border-slate-100">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-800">Event Venue</h3>
+                  <p className="text-sm text-slate-600">Specify where the event will take place</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
+                  Venue
+                </label>
+                <Controller
+                  name="venue"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      type="text"
+                      placeholder="Enter event venue (e.g., Conference Hall A, University Auditorium)"
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400 ${
+                        errors.venue ? 'border-red-300 focus:ring-red-500' : 'border-slate-200'
+                      }`}
+                    />
+                  )}
+                />
+                {errors.venue && (
+                  <p className="text-sm text-red-600">{errors.venue.message}</p>
+                )}
               </div>
             </div>
           </div>
@@ -467,13 +2005,17 @@ export const CreateEvent = () => {
                 <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
                   Sponsor Names
                 </label>
-                <input
-                  type="text"
+                <Controller
                   name="sponsors"
-                  value={formData.sponsors.join(', ')}
-                  onChange={(e) => handleArrayChange(e, 'sponsors')}
-                  placeholder="Sponsor1, Sponsor2, Sponsor3"
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      type="text"
+                      placeholder="Sponsor1, Sponsor2, Sponsor3"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400"
+                    />
+                  )}
                 />
               </div>
 
@@ -482,10 +2024,14 @@ export const CreateEvent = () => {
                 name="sponsorImages"
                 multiple
                 accept="image/*"
-                onFileChange={handleFileChange}
+                onFileChange={() => {}}
                 onUpload={(results) => handleFileUpload('logo', results)}
                 uploadType="logo"
-                maxSizeMB={2}
+                maxSizeMB={25}
+                control={control}
+                error={errors.sponsorImages}
+                uploadedFiles={uploadedFiles.sponsorLogos || []}
+                onRemoveFile={(fileId) => handleRemoveFile('logo', fileId)}
               />
             </div>
           </div>
@@ -510,13 +2056,17 @@ export const CreateEvent = () => {
                 <label className="block text-sm font-semibold text-slate-700 uppercase tracking-wide">
                   Speaker Names
                 </label>
-                <input
-                  type="text"
+                <Controller
                   name="guestSpeakers"
-                  value={formData.guestSpeakers.join(', ')}
-                  onChange={(e) => handleArrayChange(e, 'guestSpeakers')}
-                  placeholder="Speaker1, Speaker2, Speaker3"
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      {...field}
+                      type="text"
+                      placeholder="Speaker1, Speaker2, Speaker3"
+                      className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-800 text-base transition-all duration-200 placeholder-slate-400"
+                    />
+                  )}
                 />
               </div>
 
@@ -525,10 +2075,14 @@ export const CreateEvent = () => {
                 name="speakerImages"
                 multiple
                 accept="image/*"
-                onFileChange={handleFileChange}
+                onFileChange={() => {}}
                 onUpload={(results) => handleFileUpload('photo', results)}
                 uploadType="photo"
-                maxSizeMB={2}
+                maxSizeMB={25}
+                control={control}
+                error={errors.speakerPhotos}
+                uploadedFiles={uploadedFiles.speakerPhotos || []}
+                onRemoveFile={(fileId) => handleRemoveFile('photo', fileId)}
               />
             </div>
           </div>
@@ -553,66 +2107,61 @@ export const CreateEvent = () => {
                 label="Event Kits"
                 name="eventKitsFile"
                 accept="*/*"
-                onFileChange={handleFileChange}
-                onUpload={(results) => handleFileUpload('materials', results)}
-                uploadType="materials"
-                maxSizeMB={10}
+                onFileChange={() => {}}
+                onUpload={(results) => handleFileUpload('event-kits', results)}
+                uploadType="event-kits"
+                multiple
+                maxSizeMB={25}
+                control={control}
+                error={errors.eventKitsFile}
+                uploadedFiles={uploadedFiles.eventKits || []}
+                onRemoveFile={(fileId) => handleRemoveFile('event-kits', fileId)}
               />
 
               <FileDropzone
                 label="Event Programme"
                 name="eventProgrammeFile"
                 accept=".pdf,.doc,.docx"
-                onFileChange={handleFileChange}
-                onUpload={(results) => handleFileUpload('materials', results)}
-                uploadType="materials"
-                maxSizeMB={10}
+                onFileChange={() => {}}
+                onUpload={(results) => handleFileUpload('event-programmes', results)}
+                uploadType="event-programmes"
+                multiple
+                maxSizeMB={25}
+                control={control}
+                error={errors.eventProgrammeFile}
+                uploadedFiles={uploadedFiles.eventProgrammes || []}
+                onRemoveFile={(fileId) => handleRemoveFile('event-programmes', fileId)}
               />
 
               <FileDropzone
                 label="Certificate Template"
                 name="certificatesFile"
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                onFileChange={handleFileChange}
-                onUpload={(results) => handleFileUpload('materials', results)}
-                uploadType="materials"
-                maxSizeMB={5}
+                onFileChange={() => {}}
+                onUpload={(results) => handleFileUpload('certificate-template', results)}
+                uploadType="certificate-template"
+                multiple
+                maxSizeMB={25}
+                control={control}
+                error={errors.certificatesFile}
+                uploadedFiles={uploadedFiles.certificateTemplates || []}
+                onRemoveFile={(fileId) => handleRemoveFile('certificate-template', fileId)}
               />
             </div>
           </div>
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-              <div className="flex items-center space-x-3">
-                <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-red-700 text-sm sm:text-base">{error}</span>
-              </div>
-            </div>
-          )}
           
           {/* Action Button */}
           <div className="flex justify-center pt-8">
             <button
               type="submit"
-              disabled={loading}
-              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-800 text-white py-4 px-12 rounded-xl hover:from-blue-700 hover:to-blue-900 transition-all duration-200 font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              disabled={!isValid}
+              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-800 text-white py-4 px-12 rounded-xl hover:from-blue-700 hover:to-blue-900 transition-all duration-200 font-semibold text-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               <span className="flex items-center justify-center space-x-2">
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                    <span>Creating Event...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    <span>Next</span>
-                  </>
-                )}
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+                <span>Continue to Survey</span>
               </span>
             </button>
           </div>

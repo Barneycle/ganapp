@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 export const Login = () => {
   const navigate = useNavigate();
-  const { signIn, loading, error, clearError, isAuthenticated } = useAuth();
+  const { signIn, loading, error, clearError, isAuthenticated, getRedirectPath, user } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -14,10 +14,14 @@ export const Login = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/');
+    if (isAuthenticated && user) {
+      // Get redirect path based on user role
+      const redirectPath = getRedirectPath(user);
+      if (redirectPath) {
+        navigate(redirectPath);
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate, getRedirectPath]);
 
   // Clear error when component unmounts or user navigates away
   useEffect(() => {
@@ -43,7 +47,16 @@ export const Login = () => {
       const result = await signIn(formData.email, formData.password);
       
       if (result && result.success && result.user) {
-        // Navigation will happen automatically via useEffect when isAuthenticated changes
+        console.log('Login successful, user:', result.user);
+        console.log('Redirect path:', result.redirectPath);
+        
+        // Navigate to role-specific page
+        if (result.redirectPath) {
+          console.log('Navigating to:', result.redirectPath);
+          navigate(result.redirectPath);
+        } else {
+          console.log('No redirect path found, staying on current page');
+        }
       } else {
         console.error('Login failed:', result?.error || 'Unknown error');
       }

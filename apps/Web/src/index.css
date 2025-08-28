@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 html, body {
   margin: 0;
@@ -188,18 +186,5 @@ html, body {
   
   ::-webkit-scrollbar-thumb:hover {
     background: #555;
-  }
-}
-
-/* Focus styles for accessibility */
-*:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-/* Responsive focus styles */
-@media (max-width: 768px) {
-  *:focus {
-    outline-offset: 1px;
   }
 }

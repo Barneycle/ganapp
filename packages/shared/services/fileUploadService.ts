@@ -18,6 +18,12 @@ export class FileUploadService {
         return ['image/jpeg', 'image/png', 'image/svg+xml']
       case 'photo':
         return ['image/jpeg', 'image/png']
+      case 'event-kits':
+        return ['*/*'] // Accept any file type for kits
+      case 'event-programmes':
+        return ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+      case 'certificate-template':
+        return ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png']
       default:
         return ['*/*']
     }
@@ -66,13 +72,13 @@ export class FileUploadService {
   static async uploadEventMaterials(file: File, filename: string, folder: string): Promise<UploadResult> {
     try {
       const { data, error } = await supabase.storage
-        .from('event-materials')
+        .from('event-kits')
         .upload(`${folder}/${filename}`, file)
 
       if (error) throw error
 
       const { data: urlData } = supabase.storage
-        .from('event-materials')
+        .from('event-kits')
         .getPublicUrl(data.path)
 
       return {
@@ -137,6 +143,102 @@ export class FileUploadService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Upload failed'
+      }
+    }
+  }
+
+  static async uploadEventKits(file: File, filename: string): Promise<UploadResult> {
+    try {
+      const { data, error } = await supabase.storage
+        .from('event-kits')
+        .upload(`kits/${filename}`, file)
+
+      if (error) throw error
+
+      const { data: urlData } = supabase.storage
+        .from('event-kits')
+        .getPublicUrl(data.path)
+
+      return {
+        success: true,
+        url: urlData.publicUrl,
+        filename: data.path
+      }
+    } catch (error) {
+      console.error('Error uploading event kits:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Upload failed'
+      }
+    }
+  }
+
+  static async uploadEventProgramme(file: File, filename: string): Promise<UploadResult> {
+    try {
+      const { data, error } = await supabase.storage
+        .from('event-programmes')
+        .upload(`programmes/${filename}`, file)
+
+      if (error) throw error
+
+      const { data: urlData } = supabase.storage
+        .from('event-programmes')
+        .getPublicUrl(data.path)
+
+      return {
+        success: true,
+        url: urlData.publicUrl,
+        filename: data.path
+      }
+    } catch (error) {
+      console.error('Error uploading event programme:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Upload failed'
+      }
+    }
+  }
+
+  static async uploadCertificateTemplate(file: File, filename: string): Promise<UploadResult> {
+    try {
+      const { data, error } = await supabase.storage
+        .from('certificate-template')
+        .upload(`templates/${filename}`, file)
+
+      if (error) throw error
+
+      const { data: urlData } = supabase.storage
+        .from('certificate-template')
+        .getPublicUrl(data.path)
+
+      return {
+        success: true,
+        url: urlData.publicUrl,
+        filename: data.path
+      }
+    } catch (error) {
+      console.error('Error uploading certificate template:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Upload failed'
+      }
+    }
+  }
+
+  static async deleteFile(bucketName: string, filePath: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await supabase.storage
+        .from(bucketName)
+        .remove([filePath])
+
+      if (error) throw error
+
+      return { success: true }
+    } catch (error) {
+      console.error('Error deleting file:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Delete failed'
       }
     }
   }
