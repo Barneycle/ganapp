@@ -23,8 +23,5 @@
   "bugs": {
     "url": "https://github.com/Barneycle/ganapp/issues"
   },
-  "homepage": "https://github.com/BarneyCle/ganapp#readme",
-  "dependencies": {
-    "@supabase/supabase-js": "^2.39.0"
-  }
+  "homepage": "https://github.com/BarneyCle/ganapp#readme"
 }
