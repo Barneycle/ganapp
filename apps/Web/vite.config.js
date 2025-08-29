@@ -9,6 +9,7 @@ export default defineConfig({
     alias: {
       "@ganapp/shared": path.resolve(__dirname, "../../packages/shared"),
     },
+    dedupe: ['react', 'react-dom'],
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
   },
   build: {
@@ -25,7 +26,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['@supabase/supabase-js'],
+    include: ['@supabase/supabase-js', 'react', 'react-dom', 'react-router-dom'],
     force: true,
     esbuildOptions: {
       resolveExtensions: ['.ts', '.js', '.tsx', '.jsx'],
